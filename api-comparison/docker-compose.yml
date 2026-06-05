@@ -1,0 +1,162 @@
+# Sobe Postgres + os 4 serviços Python (REST, GraphQL, SOAP, gRPC), todos a
+# partir da MESMA imagem (./python/Dockerfile), variando apenas o command e a
+# porta. Isso mantém a comparação justa: mesma base, mesma lógica de negócio
+# (common/repository.py), mesma persistência — só muda a tecnologia de API.
+#
+# Uso:
+#   docker compose up -d            # sobe db + 4 serviços
+#   docker compose run --rm seed    # popula a base (500/1000/100)
+#   (rodar Locust apontando para as portas abaixo — ver load-tests/README)
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: streaming
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d streaming"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # ---- imagem base compartilhada (build uma vez, reusada pelos serviços) ----
+  rest:
+    build: ./python
+    image: streaming-python:latest
+    working_dir: /app/rest
+    command: uvicorn app:app --host 0.0.0.0 --port 8001
+    environment:
+      DATABASE_URL: postgresql+psycopg2://app:app@db:5432/streaming
+    ports:
+      - "8001:8001"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  graphql:
+    image: streaming-python:latest
+    working_dir: /app/graphql_api
+    command: uvicorn app:app --host 0.0.0.0 --port 8002
+    environment:
+      DATABASE_URL: postgresql+psycopg2://app:app@db:5432/streaming
+    ports:
+      - "8002:8002"
+    depends_on:
+      db:
+        condition: service_healthy
+      rest:
+        condition: service_started   # garante que a imagem já foi buildada
+
+  soap:
+    image: streaming-python:latest
+    working_dir: /app/soap
+    command: python server.py
+    environment:
+      DATABASE_URL: postgresql+psycopg2://app:app@db:5432/streaming
+      PORT: "8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      rest:
+        condition: service_started
+
+  grpc:
+    image: streaming-python:latest
+    working_dir: /app/grpc_api
+    command: python server.py
+    environment:
+      DATABASE_URL: postgresql+psycopg2://app:app@db:5432/streaming
+      PORT: "50051"
+    ports:
+      - "50051:50051"
+    depends_on:
+      db:
+        condition: service_healthy
+      rest:
+        condition: service_started
+
+  # ---- eixo cross-linguagem: os 4 protocolos em TypeScript (Node) ----
+  # Uma imagem única (./typescript/Dockerfile), variando só o command/porta.
+  rest_ts:
+    build: ./typescript
+    image: streaming-ts:latest
+    command: node dist/rest/server.js
+    environment:
+      DATABASE_URL_TS: postgresql://app:app@db:5432/streaming
+      PORT: "8011"
+    ports:
+      - "8011:8011"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  graphql_ts:
+    image: streaming-ts:latest
+    command: node dist/graphql/server.js
+    environment:
+      DATABASE_URL_TS: postgresql://app:app@db:5432/streaming
+      PORT: "8012"
+    ports:
+      - "8012:8012"
+    depends_on:
+      db:
+        condition: service_healthy
+      rest_ts:
+        condition: service_started   # garante a imagem já buildada
+
+  soap_ts:
+    image: streaming-ts:latest
+    command: node dist/soap/server.js
+    environment:
+      DATABASE_URL_TS: postgresql://app:app@db:5432/streaming
+      PORT: "8013"
+    ports:
+      - "8013:8013"
+    depends_on:
+      db:
+        condition: service_healthy
+      rest_ts:
+        condition: service_started
+
+  grpc_ts:
+    image: streaming-ts:latest
+    command: node dist/grpc/server.js
+    environment:
+      DATABASE_URL_TS: postgresql://app:app@db:5432/streaming
+      PORT: "50052"
+    ports:
+      - "50052:50052"
+    depends_on:
+      db:
+        condition: service_healthy
+      rest_ts:
+        condition: service_started
+
+  # ---- job de carga inicial (roda e encerra) ----
+  seed:
+    image: streaming-python:latest
+    working_dir: /app
+    command: python -m common.seed
+    environment:
+      DATABASE_URL: postgresql+psycopg2://app:app@db:5432/streaming
+      USERS: "500"
+      MUSICS: "1000"
+      PLAYLISTS: "100"
+    depends_on:
+      db:
+        condition: service_healthy
+      rest:
+        condition: service_started
+    profiles:
+      - tools   # não sobe no `up`; rodar via `docker compose run --rm seed`
+
+volumes:
+  pgdata:
