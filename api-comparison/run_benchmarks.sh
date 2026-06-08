@@ -17,7 +17,7 @@
 #   docker compose up -d && docker compose run --rm seed
 #
 # Uso:
-#   ./run_benchmarks.sh                # níveis padrão: 50 e 200 usuários, 60s
+#   ./run_benchmarks.sh               # níveis padrão: 250 e 800 usuários, 60s
 #   USERS="50 200 500" DURATION=120 ./run_benchmarks.sh
 # ============================================================================
 set -euo pipefail
@@ -28,9 +28,10 @@ OUT=reports
 mkdir -p "$OUT"
 
 # Níveis de carga e duração (segundos). Ajuste via variáveis de ambiente.
-USERS="${USERS:-50 200}"
+USERS="${USERS:-250 800}"
 DURATION="${DURATION:-60}"
 SPAWN="${SPAWN:-50}"   # usuários gerados por segundo (ramp-up)
+PROCESSES="${PROCESSES:-4}"
 
 # serviço -> "locustfile|host"
 declare -A SERVICES=(
@@ -59,7 +60,7 @@ for svc in "${ORDER[@]}"; do
     prefix="../$OUT/${svc}_${u}u"
     echo "==== $svc @ ${u} usuários (${DURATION}s) -> $host ===="
     ( cd "$lfdir" && locust -f "$lfname" --host "$host" --headless \
-        -u "$u" -r "$SPAWN" -t "${DURATION}s" \
+        -u "$u" -r "$SPAWN" -t "${DURATION}s" --processes "$PROCESSES" \
         --csv "$prefix" --html "${prefix}.html" --only-summary ) \
       || echo "   (aviso: locust retornou erro para $svc @ ${u}u)"
     echo ""
