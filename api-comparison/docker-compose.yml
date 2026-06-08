@@ -5,7 +5,7 @@
 #
 # Uso:
 #   docker compose up -d            # sobe db + 4 serviços
-#   docker compose run --rm seed    # popula a base (500/1000/100)
+#   docker compose run --rm seed    # popula a base (400/4000/600)
 #   (rodar Locust apontando para as portas abaixo — ver load-tests/README)
 
 services:
@@ -147,9 +147,9 @@ services:
     command: python -m common.seed
     environment:
       DATABASE_URL: postgresql+psycopg2://app:app@db:5432/streaming
-      USERS: "500"
-      MUSICS: "1000"
-      PLAYLISTS: "100"
+      USERS: "400"
+      MUSICS: "4000"
+      PLAYLISTS: "600"
     depends_on:
       db:
         condition: service_healthy
