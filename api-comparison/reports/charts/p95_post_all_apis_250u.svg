@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="512" viewBox="0 0 1000 512">
+<style>text{font-family:Arial,sans-serif;fill:#17202a}.title{font-size:24px;font-weight:700}.subtitle{font-size:13px;fill:#566573}.axis{stroke:#aab7b8;stroke-width:1}.grid{stroke:#e5e7e9;stroke-width:1}.label{font-size:12px}.value{font-size:12px;font-weight:700}.legend{font-size:13px}</style>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="190" y="38" class="title">P95 - POST / CREATE com 250 usuarios</text>
+<text x="190" y="62" class="subtitle">Ranking entre todas as APIs. Menor e melhor. P95 ponderado das operacoes POST / CREATE por quantidade de requisicoes.</text>
+<rect x="730" y="76" width="16" height="10" rx="2" fill="#e4572e"/>
+<text x="753" y="86" class="legend">Python</text>
+<rect x="855" y="76" width="16" height="10" rx="2" fill="#2563eb"/>
+<text x="878" y="86" class="legend">TypeScript</text>
+<line x1="262.8" y1="90" x2="262.8" y2="457" class="grid"/>
+<text x="262.8" y="489" text-anchor="middle" class="label">10 ms</text>
+<line x1="568.1" y1="90" x2="568.1" y2="457" class="grid"/>
+<text x="568.1" y="489" text-anchor="middle" class="label">100 ms</text>
+<line x1="873.4" y1="90" x2="873.4" y2="457" class="grid"/>
+<text x="873.4" y="489" text-anchor="middle" class="label">1 s</text>
+<text x="176" y="125" text-anchor="end" class="label">gRPC TypeScript</text>
+<rect x="190" y="110" width="53.8" height="22" rx="3" fill="#2563eb"/>
+<text x="252.8" y="126" class="value">8.66235 ms</text>
+<text x="176" y="169" text-anchor="end" class="label">REST TypeScript</text>
+<rect x="190" y="154" width="120.5" height="22" rx="3" fill="#2563eb"/>
+<text x="319.5" y="170" class="value">14.3257 ms</text>
+<text x="176" y="213" text-anchor="end" class="label">SOAP TypeScript</text>
+<rect x="190" y="198" width="120.5" height="22" rx="3" fill="#2563eb"/>
+<text x="319.5" y="214" class="value">14.3315 ms</text>
+<text x="176" y="257" text-anchor="end" class="label">GraphQL TypeScript</text>
+<rect x="190" y="242" width="140.4" height="22" rx="3" fill="#2563eb"/>
+<text x="339.4" y="258" class="value">16.6531 ms</text>
+<text x="176" y="301" text-anchor="end" class="label">REST Python</text>
+<rect x="190" y="286" width="528.1" height="22" rx="3" fill="#e4572e"/>
+<text x="727.1" y="302" class="value">310 ms</text>
+<text x="176" y="345" text-anchor="end" class="label">gRPC Python</text>
+<rect x="190" y="330" width="631.6" height="22" rx="3" fill="#e4572e"/>
+<text x="830.6" y="346" class="value">676.671 ms</text>
+<text x="176" y="389" text-anchor="end" class="label">GraphQL Python</text>
+<rect x="190" y="374" width="649.9" height="22" rx="3" fill="#e4572e"/>
+<text x="848.9" y="390" class="value">776.65 ms</text>
+<text x="176" y="433" text-anchor="end" class="label">SOAP Python</text>
+<rect x="190" y="418" width="670.4" height="22" rx="3" fill="#e4572e"/>
+<text x="869.4" y="434" class="value">906.665 ms</text>
+</svg>

@@ -1,8 +1,1 @@
 Method,Name,Error,Occurrences
-DELETE,DELETE /users/:id,RemoteDisconnected('Remote end closed connection without response'),1
-POST,POST /musics,RemoteDisconnected('Remote end closed connection without response'),4
-POST,POST /users,RemoteDisconnected('Remote end closed connection without response'),1
-POST,POST /playlists,RemoteDisconnected('Remote end closed connection without response'),2
-GET,GET /musics/:id,HTTPError('404 Client Error: Not Found for url: GET /musics/:id'),1172
-DELETE,DELETE /playlists/:id,RemoteDisconnected('Remote end closed connection without response'),1
-DELETE,DELETE /musics/:id,RemoteDisconnected('Remote end closed connection without response'),2

@@ -34,6 +34,8 @@ USERS="${USERS:-250 800}"
 DURATION="${DURATION:-60}"
 SPAWN="${SPAWN:-50}"   # usuários gerados por segundo (ramp-up)
 PROCESSES="${PROCESSES:-4}"
+STOP_TIMEOUT="${STOP_TIMEOUT:-60}"
+COOLDOWN="${COOLDOWN:-5}"
 
 # Os locustfiles CRUD possuem uma classe por operação.
 CRUD_OPERATIONS=(
@@ -55,7 +57,8 @@ declare -A SERVICES=(
 )
 
 # Ordem amigável de execução (Python e depois TypeScript, por protocolo).
-ORDER=(rest_py rest_ts graphql_py graphql_ts soap_py soap_ts grpc_py grpc_ts)
+DEFAULT_ORDER=(rest_py rest_ts graphql_py graphql_ts soap_py soap_ts grpc_py grpc_ts)
+read -r -a ORDER <<< "${BENCHMARK_SERVICES:-${DEFAULT_ORDER[*]}}"
 
 echo ">> Níveis de carga: ${USERS} | duração: ${DURATION}s cada"
 echo ">> Cenário: CRUD completo (15 operações por serviço)"
@@ -63,6 +66,11 @@ echo ">> DICA: em outro terminal rode  'docker stats'  para CPU/memória."
 echo ""
 
 for svc in "${ORDER[@]}"; do
+  if [[ -z "${SERVICES[$svc]+x}" ]]; then
+    echo "ERRO: serviço desconhecido em BENCHMARK_SERVICES: $svc" >&2
+    exit 1
+  fi
+
   IFS='|' read -r lf host class_prefix <<< "${SERVICES[$svc]}"
   lfdir=$(dirname "$lf")
   lfname=$(basename "$lf")
@@ -77,14 +85,19 @@ for svc in "${ORDER[@]}"; do
       exit 1
     fi
 
-    prefix="../$OUT/${svc}_${u}u"
+    report_prefix="$OUT/${svc}_${u}u"
+    prefix="../$report_prefix"
     echo "==== $svc @ ${u} usuários (${DURATION}s) -> $host ===="
+    rm -f "${report_prefix}.html" "${report_prefix}"_*.csv
     ( cd "$lfdir" && locust -f "$lfname" "${user_classes[@]}" \
         --host "$host" --headless \
         -u "$u" -r "$SPAWN" -t "${DURATION}s" --processes "$PROCESSES" \
-        --csv "$prefix" --html "${prefix}.html" --only-summary ) \
-      || echo "   (aviso: locust retornou erro para $svc @ ${u}u)"
+        --stop-timeout "$STOP_TIMEOUT" \
+        --csv "$prefix" --html "${prefix}.html" --only-summary )
+    python3 validate_benchmark_report.py "$report_prefix" \
+      --expected-operations "${#CRUD_OPERATIONS[@]}"
     echo ""
+    sleep "$COOLDOWN"
   done
 done
 

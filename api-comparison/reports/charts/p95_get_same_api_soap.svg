@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
+<style>text{font-family:Arial,sans-serif;fill:#17202a}.title{font-size:24px;font-weight:700}.subtitle{font-size:13px;fill:#566573}.axis{stroke:#aab7b8;stroke-width:1}.grid{stroke:#e5e7e9;stroke-width:1}.label{font-size:12px}.value{font-size:12px;font-weight:700}.legend{font-size:13px}</style>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="85" y="38" class="title">P95 - SOAP GET: Python x TypeScript</text>
+<text x="85" y="62" class="subtitle">Menor e melhor. P95 ponderado das operacoes GET por quantidade de requisicoes.</text>
+<line x1="85" y1="445.0" x2="865" y2="445.0" class="grid"/>
+<text x="73" y="449.0" text-anchor="end" class="label">0 ms</text>
+<line x1="85" y1="374.0" x2="865" y2="374.0" class="grid"/>
+<text x="73" y="378.0" text-anchor="end" class="label">1 s</text>
+<line x1="85" y1="303.0" x2="865" y2="303.0" class="grid"/>
+<text x="73" y="307.0" text-anchor="end" class="label">2 s</text>
+<line x1="85" y1="232.0" x2="865" y2="232.0" class="grid"/>
+<text x="73" y="236.0" text-anchor="end" class="label">3 s</text>
+<line x1="85" y1="161.0" x2="865" y2="161.0" class="grid"/>
+<text x="73" y="165.0" text-anchor="end" class="label">4 s</text>
+<line x1="85" y1="90.0" x2="865" y2="90.0" class="grid"/>
+<text x="73" y="94.0" text-anchor="end" class="label">5 s</text>
+<line x1="85" y1="90" x2="85" y2="445" class="axis"/>
+<line x1="85" y1="445" x2="865" y2="445" class="axis"/>
+<text x="85.0" y="478" text-anchor="middle" class="label">250 usuarios</text>
+<text x="865.0" y="478" text-anchor="middle" class="label">800 usuarios</text>
+<polyline points="85.0,381.7 865.0,239.1" fill="none" stroke="#e4572e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="85.0" cy="381.7" r="5" fill="#e4572e"/>
+<text x="85.0" y="370.7" text-anchor="middle" class="value">891.692 ms</text>
+<circle cx="865.0" cy="239.1" r="5" fill="#e4572e"/>
+<text x="865.0" y="228.1" text-anchor="middle" class="value">2.9 s</text>
+<polyline points="85.0,444.2 865.0,437.2" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="85.0" cy="444.2" r="5" fill="#2563eb"/>
+<text x="85.0" y="433.2" text-anchor="middle" class="value">11.8289 ms</text>
+<circle cx="865.0" cy="437.2" r="5" fill="#2563eb"/>
+<text x="865.0" y="426.2" text-anchor="middle" class="value">110 ms</text>
+<rect x="640" y="30" width="16" height="5" fill="#e4572e"/>
+<text x="663" y="38" class="legend">Python</text>
+<rect x="765" y="30" width="16" height="5" fill="#2563eb"/>
+<text x="788" y="38" class="legend">TypeScript</text>
+</svg>

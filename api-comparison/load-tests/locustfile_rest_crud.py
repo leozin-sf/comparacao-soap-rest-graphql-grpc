@@ -19,18 +19,53 @@ N_USERS, N_MUSICS, N_PLAYLISTS = 400, 4000, 600
 class RestCrudUser(HttpUser):
     abstract = True
     wait_time = between(0.05, 0.2)
+    auxiliary_timeout = 60
 
     def _url(self, path: str) -> str:
         return f"{self.host.rstrip('/')}{path}"
 
+    def _auxiliary_request(self, method: str, path: str, **kwargs):
+        session = getattr(self, "_auxiliary_session", None)
+        if session is None:
+            session = requests.Session()
+            self._auxiliary_session = session
+        return session.request(
+            method,
+            self._url(path),
+            timeout=self.auxiliary_timeout,
+            headers={"Connection": "close"},
+            **kwargs,
+        )
+
+    def _report_auxiliary_error(self, error: Exception) -> None:
+        self.environment.events.user_error.fire(
+            user_instance=self,
+            exception=error,
+            tb=error.__traceback__,
+        )
+
+    def _prepare(self, setup):
+        try:
+            return setup()
+        except Exception as error:
+            self._report_auxiliary_error(error)
+            return None
+
     def _setup_post(self, path: str, json: dict) -> int:
-        response = requests.post(self._url(path), json=json, timeout=10)
+        response = self._auxiliary_request("POST", path, json=json)
         response.raise_for_status()
         return int(response.json()["id"])
 
     def _cleanup(self, path: str, resource_id: int | None) -> None:
         if resource_id is not None:
-            requests.delete(self._url(f"{path}/{resource_id}"), timeout=10)
+            try:
+                response = self._auxiliary_request(
+                    "DELETE",
+                    f"{path}/{resource_id}",
+                )
+                response.raise_for_status()
+            except Exception as error:
+                self._report_auxiliary_error(error)
 
     def _setup_user(self) -> int:
         return self._setup_post(
@@ -92,25 +127,21 @@ class RestCreateUser(RestCrudUser):
 
 
 class RestUpdateUser(RestCrudUser):
-    def on_start(self):
-        self.resource_id = self._setup_user()
-
     @task
     def update_user(self):
+        resource_id = random.randint(1, N_USERS)
         self.client.patch(
-            f"/users/{self.resource_id}",
+            f"/users/{resource_id}",
             name="PATCH /users/:id",
             json={"name": f"Updated {uuid4().hex[:8]}"},
         )
 
-    def on_stop(self):
-        self._cleanup("/users", self.resource_id)
-
-
 class RestDeleteUser(RestCrudUser):
     @task
     def delete_user(self):
-        resource_id = self._setup_user()
+        resource_id = self._prepare(self._setup_user)
+        if resource_id is None:
+            return
         self.client.delete(f"/users/{resource_id}", name="DELETE /users/:id")
 
 
@@ -146,25 +177,21 @@ class RestCreateMusic(RestCrudUser):
 
 
 class RestUpdateMusic(RestCrudUser):
-    def on_start(self):
-        self.resource_id = self._setup_music()
-
     @task
     def update_music(self):
+        resource_id = random.randint(1, N_MUSICS)
         self.client.patch(
-            f"/musics/{self.resource_id}",
+            f"/musics/{resource_id}",
             name="PATCH /musics/:id",
             json={"title": f"Updated {uuid4().hex[:8]}"},
         )
 
-    def on_stop(self):
-        self._cleanup("/musics", self.resource_id)
-
-
 class RestDeleteMusic(RestCrudUser):
     @task
     def delete_music(self):
-        resource_id = self._setup_music()
+        resource_id = self._prepare(self._setup_music)
+        if resource_id is None:
+            return
         self.client.delete(
             f"/musics/{resource_id}",
             name="DELETE /musics/:id",
@@ -204,25 +231,21 @@ class RestCreatePlaylist(RestCrudUser):
 
 
 class RestUpdatePlaylist(RestCrudUser):
-    def on_start(self):
-        self.resource_id = self._setup_playlist()
-
     @task
     def update_playlist(self):
+        resource_id = random.randint(1, N_PLAYLISTS)
         self.client.patch(
-            f"/playlists/{self.resource_id}",
+            f"/playlists/{resource_id}",
             name="PATCH /playlists/:id",
             json={"name": f"Updated {uuid4().hex[:8]}"},
         )
 
-    def on_stop(self):
-        self._cleanup("/playlists", self.resource_id)
-
-
 class RestDeletePlaylist(RestCrudUser):
     @task
     def delete_playlist(self):
-        resource_id = self._setup_playlist()
+        resource_id = self._prepare(self._setup_playlist)
+        if resource_id is None:
+            return
         self.client.delete(
             f"/playlists/{resource_id}",
             name="DELETE /playlists/:id",

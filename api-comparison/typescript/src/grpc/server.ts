@@ -40,7 +40,11 @@ const impl = {
   CreateUser: h((r) => repo.createUser(r.name, r.email)),
   GetUser:    h((r) => repo.getUser(r.id)),
   ListUsers:  h(async (r) => ({ users: await repo.listUsers(r.limit || 100, r.offset || 0) })),
-  UpdateUser: h((r) => repo.updateUser(r.id, r.name, r.email)),
+  UpdateUser: h((r) => repo.updateUser(
+    r.id,
+    r.name || undefined,
+    r.email || undefined,
+  )),
   DeleteUser: h(async (r) => ({ ok: await repo.deleteUser(r.id) })),
 
   // ---- musics ----
