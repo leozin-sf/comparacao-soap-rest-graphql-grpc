@@ -3,7 +3,9 @@
 # run_benchmarks.sh — orquestra a bateria de testes de carga (Locust) contra
 # os serviços JÁ EM EXECUÇÃO (via `docker compose up -d` + seed).
 #
-# Para cada serviço e cada nível de carga, gera relatórios NATIVOS do Locust:
+# Para cada serviço e cada nível de carga, executa as 15 operações CRUD
+# (listar, consultar, criar, atualizar e excluir users, musics e playlists)
+# e gera relatórios NATIVOS do Locust:
 #   reports/<serviço>_<usuários>u_stats.csv          (RPS, latências, falhas)
 #   reports/<serviço>_<usuários>u_stats_history.csv  (série temporal)
 #   reports/<serviço>_<usuários>u.html               (dashboard visual)
@@ -33,33 +35,52 @@ DURATION="${DURATION:-60}"
 SPAWN="${SPAWN:-50}"   # usuários gerados por segundo (ramp-up)
 PROCESSES="${PROCESSES:-4}"
 
-# serviço -> "locustfile|host"
+# Os locustfiles CRUD possuem uma classe por operação.
+CRUD_OPERATIONS=(
+  ListUsers GetUser CreateUser UpdateUser DeleteUser
+  ListMusics GetMusic CreateMusic UpdateMusic DeleteMusic
+  ListPlaylists GetPlaylist CreatePlaylist UpdatePlaylist DeletePlaylist
+)
+
+# serviço -> "locustfile|host|prefixo das classes"
 declare -A SERVICES=(
-  ["rest_py"]="$LT/locustfile_rest.py|http://localhost:8001"
-  ["graphql_py"]="$LT/locustfile_graphql.py|http://localhost:8002"
-  ["soap_py"]="$LT/locustfile_soap.py|http://localhost:8000"
-  ["grpc_py"]="$LT/locustfile_grpc.py|localhost:50051"
-  ["rest_ts"]="$LT/locustfile_rest.py|http://localhost:8011"
-  ["graphql_ts"]="$LT/locustfile_graphql.py|http://localhost:8012"
-  ["soap_ts"]="$LT/locustfile_soap.py|http://localhost:8013"
-  ["grpc_ts"]="$LT/locustfile_grpc.py|localhost:50052"
+  ["rest_py"]="$LT/locustfile_rest_crud.py|http://localhost:8001|Rest"
+  ["graphql_py"]="$LT/locustfile_graphql_crud.py|http://localhost:8002|GraphQL"
+  ["soap_py"]="$LT/locustfile_soap_crud.py|http://localhost:8000|Soap"
+  ["grpc_py"]="$LT/locustfile_grpc_crud.py|localhost:50051|Grpc"
+  ["rest_ts"]="$LT/locustfile_rest_crud.py|http://localhost:8011|Rest"
+  ["graphql_ts"]="$LT/locustfile_graphql_crud.py|http://localhost:8012|GraphQL"
+  ["soap_ts"]="$LT/locustfile_soap_crud.py|http://localhost:8013|Soap"
+  ["grpc_ts"]="$LT/locustfile_grpc_crud.py|localhost:50052|Grpc"
 )
 
 # Ordem amigável de execução (Python e depois TypeScript, por protocolo).
 ORDER=(rest_py rest_ts graphql_py graphql_ts soap_py soap_ts grpc_py grpc_ts)
 
 echo ">> Níveis de carga: ${USERS} | duração: ${DURATION}s cada"
+echo ">> Cenário: CRUD completo (15 operações por serviço)"
 echo ">> DICA: em outro terminal rode  'docker stats'  para CPU/memória."
 echo ""
 
 for svc in "${ORDER[@]}"; do
-  IFS='|' read -r lf host <<< "${SERVICES[$svc]}"
+  IFS='|' read -r lf host class_prefix <<< "${SERVICES[$svc]}"
   lfdir=$(dirname "$lf")
   lfname=$(basename "$lf")
+  user_classes=()
+  for operation in "${CRUD_OPERATIONS[@]}"; do
+    user_classes+=("${class_prefix}${operation}")
+  done
+
   for u in $USERS; do
+    if (( u < ${#CRUD_OPERATIONS[@]} )); then
+      echo "ERRO: USERS deve ser >= ${#CRUD_OPERATIONS[@]} para incluir todas as operações CRUD." >&2
+      exit 1
+    fi
+
     prefix="../$OUT/${svc}_${u}u"
     echo "==== $svc @ ${u} usuários (${DURATION}s) -> $host ===="
-    ( cd "$lfdir" && locust -f "$lfname" --host "$host" --headless \
+    ( cd "$lfdir" && locust -f "$lfname" "${user_classes[@]}" \
+        --host "$host" --headless \
         -u "$u" -r "$SPAWN" -t "${DURATION}s" --processes "$PROCESSES" \
         --csv "$prefix" --html "${prefix}.html" --only-summary ) \
       || echo "   (aviso: locust retornou erro para $svc @ ${u}u)"
@@ -68,5 +89,5 @@ for svc in "${ORDER[@]}"; do
 done
 
 echo ">> Concluído. Relatórios em ./$OUT/"
-echo ">> Use os arquivos *_stats.csv (coluna 'Aggregated') para montar a tabela"
-echo "   comparativa do relatório, e os .html para anexar gráficos."
+echo ">> Cada *_stats.csv contém as 15 operações CRUD e a linha 'Aggregated'."
+echo ">> Em GraphQL e SOAP o tipo HTTP continuará POST; a operação está em 'Name'."

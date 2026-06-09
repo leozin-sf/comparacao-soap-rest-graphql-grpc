@@ -1,1 +1,3 @@
 Method,Name,Error,Occurrences
+POST,getPlaylist,CatchResponseError('soap fault/http 0'),1
+POST,getMusic,CatchResponseError('soap fault/http 500'),272

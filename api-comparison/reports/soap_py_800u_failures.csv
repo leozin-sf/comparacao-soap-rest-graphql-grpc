@@ -1,2 +1,5 @@
 Method,Name,Error,Occurrences
-POST,createUser,CatchResponseError('soap fault/http 0'),1
+POST,updateMusic,CatchResponseError('soap fault/http 0'),1
+POST,createMusic,CatchResponseError('soap fault/http 0'),1
+POST,listMusics,CatchResponseError('soap fault/http 0'),1
+POST,getMusic,CatchResponseError('soap fault/http 500'),159

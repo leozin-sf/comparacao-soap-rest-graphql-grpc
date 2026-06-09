@@ -1,1 +1,2 @@
 Method,Name,Error,Occurrences
+POST,createMusic,CatchResponseError('invalid json'),1

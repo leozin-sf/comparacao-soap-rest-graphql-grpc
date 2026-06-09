@@ -1,1 +1,175 @@
 Count,Message,Traceback,Nodes
+71,"HTTPConnectionPool(host='localhost', port=8002): Read timed out. (read timeout=10)","  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 340, in run
+    self.execute_next_task()
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 373, in execute_next_task
+    self.execute_task(self._task_queue.popleft())
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 490, in execute_task
+    task(self.user)
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 137, in delete_user
+    resource_id = self._setup_user()
+                  ^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 61, in _setup_user
+    data = self._direct(
+           ^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 28, in _direct
+    response = requests.post(
+               ^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/api.py"", line 134, in post
+    return request(""post"", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/api.py"", line 71, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/sessions.py"", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/sessions.py"", line 784, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/adapters.py"", line 742, in send
+    raise ReadTimeout(e, request=request)
+","BOOK-6AEUFL8EIV_363b3c483fa143c1b324931b9bde6fea, BOOK-6AEUFL8EIV_353b94229dd24cbd8fefafc49d0a4340, BOOK-6AEUFL8EIV_cf55ab653a1248b689f2c90b26c4fc6f, BOOK-6AEUFL8EIV_50c0313813424b5ba3b33bb3b2b09086"
+68,"HTTPConnectionPool(host='localhost', port=8002): Read timed out. (read timeout=10)","  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 340, in run
+    self.execute_next_task()
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 373, in execute_next_task
+    self.execute_task(self._task_queue.popleft())
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 490, in execute_task
+    task(self.user)
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 250, in delete_playlist
+    resource_id = self._setup_playlist()
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 75, in _setup_playlist
+    data = self._direct(
+           ^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 28, in _direct
+    response = requests.post(
+               ^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/api.py"", line 134, in post
+    return request(""post"", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/api.py"", line 71, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/sessions.py"", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/sessions.py"", line 784, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/adapters.py"", line 742, in send
+    raise ReadTimeout(e, request=request)
+","BOOK-6AEUFL8EIV_363b3c483fa143c1b324931b9bde6fea, BOOK-6AEUFL8EIV_353b94229dd24cbd8fefafc49d0a4340, BOOK-6AEUFL8EIV_cf55ab653a1248b689f2c90b26c4fc6f, BOOK-6AEUFL8EIV_50c0313813424b5ba3b33bb3b2b09086"
+68,"HTTPConnectionPool(host='localhost', port=8002): Read timed out. (read timeout=10)","  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 340, in run
+    self.execute_next_task()
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 373, in execute_next_task
+    self.execute_task(self._task_queue.popleft())
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 490, in execute_task
+    task(self.user)
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 195, in delete_music
+    resource_id = self._setup_music()
+                  ^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 68, in _setup_music
+    data = self._direct(
+           ^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 28, in _direct
+    response = requests.post(
+               ^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/api.py"", line 134, in post
+    return request(""post"", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/api.py"", line 71, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/sessions.py"", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/sessions.py"", line 784, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/adapters.py"", line 742, in send
+    raise ReadTimeout(e, request=request)
+","BOOK-6AEUFL8EIV_363b3c483fa143c1b324931b9bde6fea, BOOK-6AEUFL8EIV_353b94229dd24cbd8fefafc49d0a4340, BOOK-6AEUFL8EIV_cf55ab653a1248b689f2c90b26c4fc6f, BOOK-6AEUFL8EIV_50c0313813424b5ba3b33bb3b2b09086"
+28,"HTTPConnectionPool(host='localhost', port=8002): Read timed out. (read timeout=10)","  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 340, in run
+    self.execute_next_task()
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 373, in execute_next_task
+    self.execute_task(self._task_queue.popleft())
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 490, in execute_task
+    task(self.user)
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 115, in create_user
+    self._cleanup(""user"", int(data[""createUser""][""id""]))
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 87, in _cleanup
+    self._direct(f""mutation{{{mutation}(id:{resource_id})}}"")
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 28, in _direct
+    response = requests.post(
+               ^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/api.py"", line 134, in post
+    return request(""post"", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/api.py"", line 71, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/sessions.py"", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/sessions.py"", line 784, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/adapters.py"", line 742, in send
+    raise ReadTimeout(e, request=request)
+","BOOK-6AEUFL8EIV_363b3c483fa143c1b324931b9bde6fea, BOOK-6AEUFL8EIV_cf55ab653a1248b689f2c90b26c4fc6f, BOOK-6AEUFL8EIV_353b94229dd24cbd8fefafc49d0a4340, BOOK-6AEUFL8EIV_50c0313813424b5ba3b33bb3b2b09086"
+29,"HTTPConnectionPool(host='localhost', port=8002): Read timed out. (read timeout=10)","  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 340, in run
+    self.execute_next_task()
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 373, in execute_next_task
+    self.execute_task(self._task_queue.popleft())
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 490, in execute_task
+    task(self.user)
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 173, in create_music
+    self._cleanup(""music"", int(data[""createMusic""][""id""]))
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 87, in _cleanup
+    self._direct(f""mutation{{{mutation}(id:{resource_id})}}"")
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 28, in _direct
+    response = requests.post(
+               ^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/api.py"", line 134, in post
+    return request(""post"", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/api.py"", line 71, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/sessions.py"", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/sessions.py"", line 784, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/adapters.py"", line 742, in send
+    raise ReadTimeout(e, request=request)
+","BOOK-6AEUFL8EIV_363b3c483fa143c1b324931b9bde6fea, BOOK-6AEUFL8EIV_cf55ab653a1248b689f2c90b26c4fc6f, BOOK-6AEUFL8EIV_353b94229dd24cbd8fefafc49d0a4340, BOOK-6AEUFL8EIV_50c0313813424b5ba3b33bb3b2b09086"
+28,"HTTPConnectionPool(host='localhost', port=8002): Read timed out. (read timeout=10)","  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 340, in run
+    self.execute_next_task()
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 373, in execute_next_task
+    self.execute_task(self._task_queue.popleft())
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/locust/user/task.py"", line 490, in execute_task
+    task(self.user)
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 228, in create_playlist
+    self._cleanup(""playlist"", int(data[""createPlaylist""][""id""]))
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 87, in _cleanup
+    self._direct(f""mutation{{{mutation}(id:{resource_id})}}"")
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/load-tests/locustfile_graphql_crud.py"", line 28, in _direct
+    response = requests.post(
+               ^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/api.py"", line 134, in post
+    return request(""post"", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/api.py"", line 71, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/sessions.py"", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/sessions.py"", line 784, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/home/leozin/unifor/sistemas-distribuidos/comparacao-soap-rest-graphql-grpc/api-comparison/.venv/lib/python3.12/site-packages/requests/adapters.py"", line 742, in send
+    raise ReadTimeout(e, request=request)
+","BOOK-6AEUFL8EIV_363b3c483fa143c1b324931b9bde6fea, BOOK-6AEUFL8EIV_cf55ab653a1248b689f2c90b26c4fc6f, BOOK-6AEUFL8EIV_353b94229dd24cbd8fefafc49d0a4340, BOOK-6AEUFL8EIV_50c0313813424b5ba3b33bb3b2b09086"

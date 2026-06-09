@@ -182,10 +182,9 @@ PORT=50052 npm run start:grpc       # gRPC
 
 ## Testes de carga e coleta de métricas
 
-Os testes usam **Locust**. O cenário (em todos os protocolos) mistura as
-operações com pesos realistas: listar músicas (5), consultar usuário (4),
-listar playlists do usuário (3), listar músicas da playlist (3), criar usuário
-(2) e criar playlist + adicionar música (1).
+Os testes usam **Locust**. O `run_benchmarks.sh` executa o CRUD completo de
+`users`, `musics` e `playlists`: listagem, consulta por ID, criação,
+atualização e exclusão.
 
 ### Rodando a bateria completa
 
@@ -198,12 +197,21 @@ pip install -r load-tests/requirements.txt
 USERS="50 200 500" DURATION=120 ./run_benchmarks.sh
 ```
 
+São 15 cenários por serviço, distribuídos entre os usuários virtuais. Por
+isso, cada nível configurado em `USERS` deve ter pelo menos 15 usuários.
+
 Isso gera, em `reports/`, para cada serviço e nível de carga:
 
 - `<serviço>_<N>u_stats.csv` — **RPS, latências, P50…P100, falhas** (use a
   linha `Aggregated`);
 - `<serviço>_<N>u_stats_history.csv` — série temporal;
 - `<serviço>_<N>u.html` — dashboard visual (bom para anexar ao relatório).
+
+Cada arquivo `_stats.csv` contém uma linha por operação CRUD e a linha
+`Aggregated`. Em GraphQL e SOAP, a coluna `Type` aparece como `POST` porque
+esse é o transporte HTTP dos dois protocolos; a ação efetiva (`updateUser`,
+`deleteMusic`, etc.) aparece na coluna `Name`. Em gRPC, `Name` contém o método
+RPC.
 
 ### Gerando os gráficos comparativos de latência
 
@@ -214,15 +222,26 @@ python3 generate_latency_charts.py
 ```
 
 O script detecta automaticamente os níveis de carga presentes em `reports/`
-e cria gráficos de **latência média** e **P95** em `reports/charts/`:
+e cria gráficos de **latência média** e **P95** em `reports/charts/`. Além dos
+resultados agregados do CRUD completo, são gerados comparativos para `get`,
+`post` (criação), `update` e `delete`:
 
 - `<metrica>_same_api_<api>.svg` — compara Python e TypeScript para a mesma
-  API ao longo das cargas;
+  API ao longo das cargas, considerando o CRUD completo;
 - `<metrica>_all_apis_<N>u.svg` — compara todas as APIs e linguagens na mesma
-  carga.
+  carga, considerando o CRUD completo;
+- `<metrica>_<operacao>_same_api_<api>.svg` — compara Python e TypeScript
+  para uma operação;
+- `<metrica>_<operacao>_all_apis_<N>u.svg` — compara todas as APIs e
+  linguagens para uma operação e carga.
 
 `<metrica>` será `average` para a média do tempo de resposta ou `p95` para o
-percentil 95.
+percentil 95. `<operacao>` será `get`, `post`, `update` ou `delete`.
+
+A latência média de cada operação é ponderada pela quantidade de requisições
+das três entidades. Como o CSV do Locust não fornece o histograma combinado
+por categoria, o P95 por operação é uma aproximação ponderada dos P95 de
+usuários, músicas e playlists.
 
 Para usar outros diretórios:
 
