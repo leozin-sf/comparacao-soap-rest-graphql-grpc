@@ -5,6 +5,7 @@ WSDL disponível em: http://host:8000/?wsdl
 import os
 import sys
 import _compat  # noqa: F401  (deve vir antes de qualquer import spyne)
+from concurrent.futures import ThreadPoolExecutor
 
 from spyne import Application, rpc, ServiceBase, Integer, Unicode, Boolean
 from spyne.model.complex import ComplexModel, Array
@@ -14,9 +15,27 @@ from wsgiref.simple_server import make_server, WSGIServer
 from socketserver import ThreadingMixIn
 
 
-class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
-    """WSGI server multi-thread para atender requisições concorrentes (Locust)."""
+class ThreadPoolWSGIServer(ThreadingMixIn, WSGIServer):
+    """WSGI server com concorrência limitada para evitar uma thread por conexão."""
+
     daemon_threads = True
+    request_queue_size = 1024
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        workers = int(os.getenv("SOAP_WORKERS", "100"))
+        self.executor = ThreadPoolExecutor(max_workers=workers)
+
+    def process_request(self, request, client_address):
+        self.executor.submit(
+            self.process_request_thread,
+            request,
+            client_address,
+        )
+
+    def server_close(self):
+        super().server_close()
+        self.executor.shutdown(wait=True)
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from common import repository as repo
@@ -151,4 +170,4 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", "8000"))
     print(f"SOAP server (WSDL em /?wsdl) na porta {port}")
     make_server("0.0.0.0", port, wsgi_app,
-                server_class=ThreadingWSGIServer).serve_forever()
+                server_class=ThreadPoolWSGIServer).serve_forever()

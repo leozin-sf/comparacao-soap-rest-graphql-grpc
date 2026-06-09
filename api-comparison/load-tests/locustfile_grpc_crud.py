@@ -68,12 +68,27 @@ class GrpcCrudUser(User):
         self.measured_channel.close()
         self.setup_channel.close()
 
+    def _report_auxiliary_error(self, error: Exception) -> None:
+        self.environment.events.user_error.fire(
+            user_instance=self,
+            exception=error,
+            tb=error.__traceback__,
+        )
+
+    def _prepare(self, setup):
+        try:
+            return setup()
+        except Exception as error:
+            self._report_auxiliary_error(error)
+            return None
+
     def _setup_user(self) -> int:
         result = self.setup_stub.CreateUser(
             pb.UserInput(
                 name="CRUD setup",
                 email=f"crud-{uuid4().hex}@load.test",
-            )
+            ),
+            timeout=60,
         )
         return result.id
 
@@ -84,7 +99,8 @@ class GrpcCrudUser(User):
                 artist="Load test",
                 album="Temporary",
                 duration_seconds=180,
-            )
+            ),
+            timeout=60,
         )
         return result.id
 
@@ -93,7 +109,8 @@ class GrpcCrudUser(User):
             pb.PlaylistInput(
                 name="CRUD setup",
                 user_id=random.randint(1, N_USERS),
-            )
+            ),
+            timeout=60,
         )
         return result.id
 
@@ -103,7 +120,10 @@ class GrpcCrudUser(User):
             "music": self.setup_stub.DeleteMusic,
             "playlist": self.setup_stub.DeletePlaylist,
         }[resource]
-        method(pb.Id(id=resource_id))
+        try:
+            method(pb.Id(id=resource_id), timeout=60)
+        except Exception as error:
+            self._report_auxiliary_error(error)
 
 
 # ---------- users ----------
@@ -132,33 +152,21 @@ class GrpcCreateUser(GrpcCrudUser):
 
 
 class GrpcUpdateUser(GrpcCrudUser):
-    def on_start(self):
-        super().on_start()
-        self.email = f"crud-{uuid4().hex}@load.test"
-        result = self.setup_stub.CreateUser(
-            pb.UserInput(name="CRUD setup", email=self.email)
-        )
-        self.resource_id = result.id
-
     @task
     def update_user(self):
         self.stub.UpdateUser(
             pb.UserPatch(
-                id=self.resource_id,
+                id=random.randint(1, N_USERS),
                 name=f"Updated {uuid4().hex[:8]}",
-                email=self.email,
             )
         )
-
-    def on_stop(self):
-        self._cleanup("user", self.resource_id)
-        super().on_stop()
-
 
 class GrpcDeleteUser(GrpcCrudUser):
     @task
     def delete_user(self):
-        resource_id = self._setup_user()
+        resource_id = self._prepare(self._setup_user)
+        if resource_id is None:
+            return
         self.stub.DeleteUser(pb.Id(id=resource_id))
 
 
@@ -190,15 +198,11 @@ class GrpcCreateMusic(GrpcCrudUser):
 
 
 class GrpcUpdateMusic(GrpcCrudUser):
-    def on_start(self):
-        super().on_start()
-        self.resource_id = self._setup_music()
-
     @task
     def update_music(self):
         self.stub.UpdateMusic(
             pb.MusicPatch(
-                id=self.resource_id,
+                id=random.randint(1, N_MUSICS),
                 title=f"Updated {uuid4().hex[:8]}",
                 artist="Load test",
                 album="Temporary",
@@ -206,15 +210,12 @@ class GrpcUpdateMusic(GrpcCrudUser):
             )
         )
 
-    def on_stop(self):
-        self._cleanup("music", self.resource_id)
-        super().on_stop()
-
-
 class GrpcDeleteMusic(GrpcCrudUser):
     @task
     def delete_music(self):
-        resource_id = self._setup_music()
+        resource_id = self._prepare(self._setup_music)
+        if resource_id is None:
+            return
         self.stub.DeleteMusic(pb.Id(id=resource_id))
 
 
@@ -244,26 +245,19 @@ class GrpcCreatePlaylist(GrpcCrudUser):
 
 
 class GrpcUpdatePlaylist(GrpcCrudUser):
-    def on_start(self):
-        super().on_start()
-        self.resource_id = self._setup_playlist()
-
     @task
     def update_playlist(self):
         self.stub.UpdatePlaylist(
             pb.PlaylistPatch(
-                id=self.resource_id,
+                id=random.randint(1, N_PLAYLISTS),
                 name=f"Updated {uuid4().hex[:8]}",
             )
         )
 
-    def on_stop(self):
-        self._cleanup("playlist", self.resource_id)
-        super().on_stop()
-
-
 class GrpcDeletePlaylist(GrpcCrudUser):
     @task
     def delete_playlist(self):
-        resource_id = self._setup_playlist()
+        resource_id = self._prepare(self._setup_playlist)
+        if resource_id is None:
+            return
         self.stub.DeletePlaylist(pb.Id(id=resource_id))

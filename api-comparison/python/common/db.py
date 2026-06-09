@@ -18,12 +18,14 @@ DATABASE_URL = os.getenv(
     "postgresql+psycopg2://app:app@localhost:5432/streaming",
 )
 
-# pool_pre_ping evita conexões mortas sob carga; pool maior ajuda no Locust.
+# Mantém o mesmo limite padrão do pool `pg` usado pelos serviços TypeScript.
+# Com oito serviços ativos, 10 conexões por serviço ficam abaixo das 100
+# conexões padrão do PostgreSQL e evitam exaustão global durante o benchmark.
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    pool_size=20,
-    max_overflow=40,
+    pool_size=10,
+    max_overflow=0,
     future=True,
 )
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, future=True)

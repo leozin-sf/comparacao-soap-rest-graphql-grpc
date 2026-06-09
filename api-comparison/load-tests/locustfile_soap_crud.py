@@ -33,16 +33,35 @@ def envelope(body: str) -> str:
 class SoapCrudUser(HttpUser):
     abstract = True
     wait_time = between(0.05, 0.2)
+    auxiliary_timeout = 60
 
     def _endpoint(self) -> str:
         return f"{self.host.rstrip('/')}/"
 
+    def _report_auxiliary_error(self, error: Exception) -> None:
+        self.environment.events.user_error.fire(
+            user_instance=self,
+            exception=error,
+            tb=error.__traceback__,
+        )
+
+    def _prepare(self, setup):
+        try:
+            return setup()
+        except Exception as error:
+            self._report_auxiliary_error(error)
+            return None
+
     def _direct(self, body: str) -> str:
-        response = requests.post(
+        session = getattr(self, "_auxiliary_session", None)
+        if session is None:
+            session = requests.Session()
+            self._auxiliary_session = session
+        response = session.post(
             self._endpoint(),
             data=envelope(body),
-            headers=HEADERS,
-            timeout=10,
+            headers={**HEADERS, "Connection": "close"},
+            timeout=self.auxiliary_timeout,
         )
         response.raise_for_status()
         if "Fault" in response.text:
@@ -104,10 +123,13 @@ class SoapCrudUser(HttpUser):
             "music": "deleteMusic",
             "playlist": "deletePlaylist",
         }[resource]
-        self._direct(
-            f"<tns:{operation}><tns:id>{resource_id}</tns:id>"
-            f"</tns:{operation}>"
-        )
+        try:
+            self._direct(
+                f"<tns:{operation}><tns:id>{resource_id}</tns:id>"
+                f"</tns:{operation}>"
+            )
+        except Exception as error:
+            self._report_auxiliary_error(error)
 
 
 # ---------- users ----------
@@ -145,26 +167,22 @@ class SoapCreateUser(SoapCrudUser):
 
 
 class SoapUpdateUser(SoapCrudUser):
-    def on_start(self):
-        self.resource_id = self._setup_user()
-
     @task
     def update_user(self):
+        resource_id = random.randint(1, N_USERS)
         self._call(
-            f"<tns:updateUser><tns:id>{self.resource_id}</tns:id>"
+            f"<tns:updateUser><tns:id>{resource_id}</tns:id>"
             f"<tns:name>Updated {uuid4().hex[:8]}</tns:name>"
             "</tns:updateUser>",
             "updateUser",
         )
 
-    def on_stop(self):
-        self._cleanup("user", self.resource_id)
-
-
 class SoapDeleteUser(SoapCrudUser):
     @task
     def delete_user(self):
-        resource_id = self._setup_user()
+        resource_id = self._prepare(self._setup_user)
+        if resource_id is None:
+            return
         self._call(
             f"<tns:deleteUser><tns:id>{resource_id}</tns:id>"
             "</tns:deleteUser>",
@@ -209,26 +227,22 @@ class SoapCreateMusic(SoapCrudUser):
 
 
 class SoapUpdateMusic(SoapCrudUser):
-    def on_start(self):
-        self.resource_id = self._setup_music()
-
     @task
     def update_music(self):
+        resource_id = random.randint(1, N_MUSICS)
         self._call(
-            f"<tns:updateMusic><tns:id>{self.resource_id}</tns:id>"
+            f"<tns:updateMusic><tns:id>{resource_id}</tns:id>"
             f"<tns:title>Updated {uuid4().hex[:8]}</tns:title>"
             "</tns:updateMusic>",
             "updateMusic",
         )
 
-    def on_stop(self):
-        self._cleanup("music", self.resource_id)
-
-
 class SoapDeleteMusic(SoapCrudUser):
     @task
     def delete_music(self):
-        resource_id = self._setup_music()
+        resource_id = self._prepare(self._setup_music)
+        if resource_id is None:
+            return
         self._call(
             f"<tns:deleteMusic><tns:id>{resource_id}</tns:id>"
             "</tns:deleteMusic>",
@@ -272,26 +286,22 @@ class SoapCreatePlaylist(SoapCrudUser):
 
 
 class SoapUpdatePlaylist(SoapCrudUser):
-    def on_start(self):
-        self.resource_id = self._setup_playlist()
-
     @task
     def update_playlist(self):
+        resource_id = random.randint(1, N_PLAYLISTS)
         self._call(
-            f"<tns:updatePlaylist><tns:id>{self.resource_id}</tns:id>"
+            f"<tns:updatePlaylist><tns:id>{resource_id}</tns:id>"
             f"<tns:name>Updated {uuid4().hex[:8]}</tns:name>"
             "</tns:updatePlaylist>",
             "updatePlaylist",
         )
 
-    def on_stop(self):
-        self._cleanup("playlist", self.resource_id)
-
-
 class SoapDeletePlaylist(SoapCrudUser):
     @task
     def delete_playlist(self):
-        resource_id = self._setup_playlist()
+        resource_id = self._prepare(self._setup_playlist)
+        if resource_id is None:
+            return
         self._call(
             f"<tns:deletePlaylist><tns:id>{resource_id}</tns:id>"
             "</tns:deletePlaylist>",

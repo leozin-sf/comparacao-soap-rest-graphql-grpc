@@ -20,15 +20,35 @@ N_USERS, N_MUSICS, N_PLAYLISTS = 400, 4000, 600
 class GraphQLCrudUser(HttpUser):
     abstract = True
     wait_time = between(0.05, 0.2)
+    auxiliary_timeout = 60
 
     def _endpoint(self) -> str:
         return f"{self.host.rstrip('/')}/graphql"
 
+    def _report_auxiliary_error(self, error: Exception) -> None:
+        self.environment.events.user_error.fire(
+            user_instance=self,
+            exception=error,
+            tb=error.__traceback__,
+        )
+
+    def _prepare(self, setup):
+        try:
+            return setup()
+        except Exception as error:
+            self._report_auxiliary_error(error)
+            return None
+
     def _direct(self, query: str) -> dict:
-        response = requests.post(
+        session = getattr(self, "_auxiliary_session", None)
+        if session is None:
+            session = requests.Session()
+            self._auxiliary_session = session
+        response = session.post(
             self._endpoint(),
             json={"query": query},
-            timeout=10,
+            headers={"Connection": "close"},
+            timeout=self.auxiliary_timeout,
         )
         response.raise_for_status()
         payload = response.json()
@@ -84,7 +104,10 @@ class GraphQLCrudUser(HttpUser):
             "music": "deleteMusic",
             "playlist": "deletePlaylist",
         }[resource]
-        self._direct(f"mutation{{{mutation}(id:{resource_id})}}")
+        try:
+            self._direct(f"mutation{{{mutation}(id:{resource_id})}}")
+        except Exception as error:
+            self._report_auxiliary_error(error)
 
 
 # ---------- users ----------
@@ -116,25 +139,21 @@ class GraphQLCreateUser(GraphQLCrudUser):
 
 
 class GraphQLUpdateUser(GraphQLCrudUser):
-    def on_start(self):
-        self.resource_id = self._setup_user()
-
     @task
     def update_user(self):
+        resource_id = random.randint(1, N_USERS)
         self._gql(
-            f'mutation{{updateUser(id:{self.resource_id},'
+            f'mutation{{updateUser(id:{resource_id},'
             f'name:"Updated {uuid4().hex[:8]}"){{id name}}}}',
             "updateUser",
         )
 
-    def on_stop(self):
-        self._cleanup("user", self.resource_id)
-
-
 class GraphQLDeleteUser(GraphQLCrudUser):
     @task
     def delete_user(self):
-        resource_id = self._setup_user()
+        resource_id = self._prepare(self._setup_user)
+        if resource_id is None:
+            return
         self._gql(
             f"mutation{{deleteUser(id:{resource_id})}}",
             "deleteUser",
@@ -174,25 +193,21 @@ class GraphQLCreateMusic(GraphQLCrudUser):
 
 
 class GraphQLUpdateMusic(GraphQLCrudUser):
-    def on_start(self):
-        self.resource_id = self._setup_music()
-
     @task
     def update_music(self):
+        resource_id = random.randint(1, N_MUSICS)
         self._gql(
-            f'mutation{{updateMusic(id:{self.resource_id},'
+            f'mutation{{updateMusic(id:{resource_id},'
             f'title:"Updated {uuid4().hex[:8]}"){{id title}}}}',
             "updateMusic",
         )
 
-    def on_stop(self):
-        self._cleanup("music", self.resource_id)
-
-
 class GraphQLDeleteMusic(GraphQLCrudUser):
     @task
     def delete_music(self):
-        resource_id = self._setup_music()
+        resource_id = self._prepare(self._setup_music)
+        if resource_id is None:
+            return
         self._gql(
             f"mutation{{deleteMusic(id:{resource_id})}}",
             "deleteMusic",
@@ -229,25 +244,21 @@ class GraphQLCreatePlaylist(GraphQLCrudUser):
 
 
 class GraphQLUpdatePlaylist(GraphQLCrudUser):
-    def on_start(self):
-        self.resource_id = self._setup_playlist()
-
     @task
     def update_playlist(self):
+        resource_id = random.randint(1, N_PLAYLISTS)
         self._gql(
-            f'mutation{{updatePlaylist(id:{self.resource_id},'
+            f'mutation{{updatePlaylist(id:{resource_id},'
             f'name:"Updated {uuid4().hex[:8]}"){{id name}}}}',
             "updatePlaylist",
         )
 
-    def on_stop(self):
-        self._cleanup("playlist", self.resource_id)
-
-
 class GraphQLDeletePlaylist(GraphQLCrudUser):
     @task
     def delete_playlist(self):
-        resource_id = self._setup_playlist()
+        resource_id = self._prepare(self._setup_playlist)
+        if resource_id is None:
+            return
         self._gql(
             f"mutation{{deletePlaylist(id:{resource_id})}}",
             "deletePlaylist",

@@ -23,6 +23,21 @@ API_LABELS = {
 }
 LANGUAGE_LABELS = {"py": "Python", "ts": "TypeScript"}
 COLORS = {"py": "#e4572e", "ts": "#2563eb"}
+CRUD_OPERATIONS = ("get", "post", "update", "delete")
+OPERATION_LABELS = {
+    "get": "GET",
+    "post": "POST / CREATE",
+    "update": "UPDATE",
+    "delete": "DELETE",
+}
+READ_OPERATION_NAMES = {
+    "user",
+    "users",
+    "music",
+    "musics",
+    "playlist",
+    "playlists",
+}
 
 
 @dataclass(frozen=True)
@@ -32,6 +47,7 @@ class Result:
     users: int
     average_ms: float
     p95_ms: float
+    operation: str | None = None
 
     @property
     def label(self) -> str:
@@ -57,6 +73,65 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def classify_operation(api: str, request_type: str, name: str) -> str | None:
+    method = request_type.strip().upper()
+    if api == "rest":
+        if method == "GET":
+            return "get"
+        if method == "POST":
+            return "post"
+        if method in {"PATCH", "PUT"}:
+            return "update"
+        if method == "DELETE":
+            return "delete"
+
+    operation_name = name.rsplit("/", 1)[-1].strip().lower()
+    if operation_name.startswith(("get", "list")):
+        return "get"
+    if api == "graphql" and operation_name in READ_OPERATION_NAMES:
+        return "get"
+    if operation_name.startswith("create"):
+        return "post"
+    if operation_name.startswith("update"):
+        return "update"
+    if operation_name.startswith("delete"):
+        return "delete"
+    return None
+
+
+def grouped_operation_result(
+    api: str,
+    language: str,
+    users: int,
+    operation: str,
+    rows: list[dict[str, str]],
+) -> Result | None:
+    matching_rows = [
+        row
+        for row in rows
+        if classify_operation(api, row.get("Type", ""), row.get("Name", ""))
+        == operation
+    ]
+    request_count = sum(int(row["Request Count"]) for row in matching_rows)
+    if request_count == 0:
+        return None
+
+    def weighted(column: str) -> float:
+        return sum(
+            float(row[column]) * int(row["Request Count"])
+            for row in matching_rows
+        ) / request_count
+
+    return Result(
+        api=api,
+        language=language,
+        users=users,
+        average_ms=weighted("Average Response Time"),
+        p95_ms=weighted("95%"),
+        operation=operation,
+    )
+
+
 def read_results(reports_dir: Path) -> list[Result]:
     results: list[Result] = []
     for path in sorted(reports_dir.glob("*_stats.csv")):
@@ -65,9 +140,9 @@ def read_results(reports_dir: Path) -> list[Result]:
             continue
 
         with path.open(newline="", encoding="utf-8-sig") as report:
+            rows = list(csv.DictReader(report))
             aggregated = next(
-                (row for row in csv.DictReader(report) if row.get("Name") == "Aggregated"),
-                None,
+                (row for row in rows if row.get("Name") == "Aggregated"), None
             )
 
         if aggregated is None:
@@ -75,15 +150,24 @@ def read_results(reports_dir: Path) -> list[Result]:
         if not aggregated.get("95%"):
             raise ValueError(f"Coluna 95% nao encontrada em {path}")
 
+        api = match.group("api")
+        language = match.group("language")
+        users = int(match.group("users"))
         results.append(
             Result(
-                api=match.group("api"),
-                language=match.group("language"),
-                users=int(match.group("users")),
+                api=api,
+                language=language,
+                users=users,
                 average_ms=float(aggregated["Average Response Time"]),
                 p95_ms=float(aggregated["95%"]),
             )
         )
+        for operation in CRUD_OPERATIONS:
+            operation_result = grouped_operation_result(
+                api, language, users, operation, rows
+            )
+            if operation_result is not None:
+                results.append(operation_result)
 
     if not results:
         raise ValueError(f"Nenhum arquivo *_stats.csv valido encontrado em {reports_dir}")
@@ -132,7 +216,29 @@ def metric_label(metric: str) -> str:
     return "P95" if metric == "p95" else "Latencia media"
 
 
-def line_chart(api: str, values: list[Result], metric: str) -> str:
+def chart_scope(operation: str | None) -> str:
+    return (
+        f"operacoes {OPERATION_LABELS[operation]}"
+        if operation is not None
+        else "CRUD completo"
+    )
+
+
+def chart_subtitle(metric: str, operation: str | None) -> str:
+    if metric == "p95" and operation is not None:
+        return (
+            f"Menor e melhor. P95 ponderado das {chart_scope(operation)} "
+            "por quantidade de requisicoes."
+        )
+    return f"Menor e melhor. Escopo: {chart_scope(operation)}."
+
+
+def line_chart(
+    api: str,
+    values: list[Result],
+    metric: str,
+    operation: str | None = None,
+) -> str:
     width, height = 900, 520
     left, right, top, bottom = 85, 35, 90, 75
     plot_width = width - left - right
@@ -148,9 +254,13 @@ def line_chart(api: str, values: list[Result], metric: str) -> str:
     def y_position(latency: float) -> float:
         return top + plot_height - (latency / max_latency) * plot_height
 
+    operation_suffix = f" {OPERATION_LABELS[operation]}" if operation else ""
     parts = [
-        f'<text x="{left}" y="38" class="title">{metric_label(metric)} - {API_LABELS[api]}: Python x TypeScript</text>',
-        f'<text x="{left}" y="62" class="subtitle">Menor e melhor. Valores da linha Aggregated do Locust.</text>',
+        f'<text x="{left}" y="38" class="title">{metric_label(metric)} - '
+        f"{API_LABELS[api]}{operation_suffix}: "
+        "Python x TypeScript</text>",
+        f'<text x="{left}" y="62" class="subtitle">'
+        f"{chart_subtitle(metric, operation)}</text>",
     ]
 
     for tick in range(6):
@@ -214,7 +324,12 @@ def line_chart(api: str, values: list[Result], metric: str) -> str:
     return svg_document(width, height, "\n".join(parts))
 
 
-def all_apis_chart(users: int, values: list[Result], metric: str) -> str:
+def all_apis_chart(
+    users: int,
+    values: list[Result],
+    metric: str,
+    operation: str | None = None,
+) -> str:
     ordered = sorted(values, key=lambda result: metric_value(result, metric))
     width = 1000
     row_height = 44
@@ -229,16 +344,22 @@ def all_apis_chart(users: int, values: list[Result], metric: str) -> str:
     min_value = max(1.0, min(positive_values) / 1.5)
     max_value = max(positive_values) * 1.25
     min_log, max_log = math.log10(min_value), math.log10(max_value)
+    log_range = max_log - min_log
 
     def x_position(value: float) -> float:
-        ratio = (math.log10(max(value, min_value)) - min_log) / (max_log - min_log)
+        ratio = (
+            (math.log10(max(value, min_value)) - min_log) / log_range
+            if log_range
+            else 1
+        )
         return left + ratio * plot_width
 
     parts = [
-        f'<text x="{left}" y="38" class="title">{metric_label(metric)} - todas as APIs com {users} usuarios</text>',
-        '<text x="{left}" y="62" class="subtitle">Ranking crescente; eixo logaritmico para preservar diferencas entre poucos ms e varios segundos.</text>'.replace(
-            "{left}", str(left)
-        ),
+        f'<text x="{left}" y="38" class="title">{metric_label(metric)} - '
+        f'{OPERATION_LABELS.get(operation, "CRUD completo")} com '
+        f"{users} usuarios</text>",
+        f'<text x="{left}" y="62" class="subtitle">Ranking entre todas as '
+        f"APIs. {chart_subtitle(metric, operation)}</text>",
     ]
 
     legend_x = width - 270
@@ -292,8 +413,13 @@ def main() -> None:
 
     generated: list[Path] = []
     for metric in ("average", "p95"):
+        overall_results = [
+            result for result in results if result.operation is None
+        ]
         for api in API_LABELS:
-            api_results = [result for result in results if result.api == api]
+            api_results = [
+                result for result in overall_results if result.api == api
+            ]
             if api_results:
                 path = args.output / f"{metric}_same_api_{api}.svg"
                 path.write_text(
@@ -301,13 +427,64 @@ def main() -> None:
                 )
                 generated.append(path)
 
-        for users in sorted({result.users for result in results}):
-            load_results = [result for result in results if result.users == users]
+        for users in sorted({result.users for result in overall_results}):
+            load_results = [
+                result for result in overall_results if result.users == users
+            ]
             path = args.output / f"{metric}_all_apis_{users}u.svg"
             path.write_text(
                 all_apis_chart(users, load_results, metric), encoding="utf-8"
             )
             generated.append(path)
+
+        for operation in CRUD_OPERATIONS:
+            operation_results = [
+                result for result in results if result.operation == operation
+            ]
+            for api in API_LABELS:
+                api_results = [
+                    result
+                    for result in operation_results
+                    if result.api == api
+                ]
+                if api_results:
+                    path = (
+                        args.output
+                        / f"{metric}_{operation}_same_api_{api}.svg"
+                    )
+                    path.write_text(
+                        line_chart(
+                            api,
+                            api_results,
+                            metric,
+                            operation=operation,
+                        ),
+                        encoding="utf-8",
+                    )
+                    generated.append(path)
+
+            for users in sorted(
+                {result.users for result in operation_results}
+            ):
+                load_results = [
+                    result
+                    for result in operation_results
+                    if result.users == users
+                ]
+                path = (
+                    args.output
+                    / f"{metric}_{operation}_all_apis_{users}u.svg"
+                )
+                path.write_text(
+                    all_apis_chart(
+                        users,
+                        load_results,
+                        metric,
+                        operation=operation,
+                    ),
+                    encoding="utf-8",
+                )
+                generated.append(path)
 
     print(f"{len(generated)} graficos gerados em {args.output}:")
     for path in generated:

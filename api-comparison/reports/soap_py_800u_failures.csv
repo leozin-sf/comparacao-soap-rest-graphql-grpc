@@ -1,2 +1,1 @@
 Method,Name,Error,Occurrences
-POST,createUser,CatchResponseError('soap fault/http 0'),1
