@@ -1,5 +1,17 @@
 # Comparação de Tecnologias de API — SOAP × REST × GraphQL × gRPC
 
+# ATUALIZAÇÃO IMPORTANTE: GRÁFICOS E RESPOSTAS DAS APIS AJUSTADOS
+
+> **Eu ajustei os gráficos e as respostas das APIs.**
+>
+> - Corrigi os gráficos para utilizarem escala linear iniciada em zero.
+> - Corrigi e conferi os tamanhos das respostas retornadas pelas APIs.
+> - Validei que REST, GraphQL, SOAP e gRPC consultam as APIs e o PostgreSQL
+>   corretamente, sem respostas fabricadas pelo script Bash.
+> - Confirmei a equivalência dos dados retornados em Python e TypeScript,
+>   considerando as diferenças de serialização de JSON, XML e Protobuf.
+> - Executei novamente os benchmarks e regenerei os relatórios e gráficos.
+
 Prova de conceito (PoC) para a disciplina de **Computação Distribuída**
 (Prof. Nabor C. Mendonça). O objetivo é comparar, de forma **justa e
 mensurável**, quatro tecnologias de comunicação de APIs — **SOAP, REST,
