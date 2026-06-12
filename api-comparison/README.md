@@ -1,5 +1,17 @@
 # Comparação de Tecnologias de API — SOAP × REST × GraphQL × gRPC
 
+# ATUALIZAÇÃO IMPORTANTE: GRÁFICOS E RESPOSTAS DAS APIS AJUSTADOS
+
+> **Eu ajustei os gráficos e as respostas das APIs.**
+>
+> - Corrigi os gráficos para utilizarem escala linear iniciada em zero.
+> - Corrigi e conferi os tamanhos das respostas retornadas pelas APIs.
+> - Validei que REST, GraphQL, SOAP e gRPC consultam as APIs e o PostgreSQL
+>   corretamente, sem respostas fabricadas pelo script Bash.
+> - Confirmei a equivalência dos dados retornados em Python e TypeScript,
+>   considerando as diferenças de serialização de JSON, XML e Protobuf.
+> - Executei novamente os benchmarks e regenerei os relatórios e gráficos.
+
 Prova de conceito (PoC) para a disciplina de **Computação Distribuída**
 (Prof. Nabor C. Mendonça). O objetivo é comparar, de forma **justa e
 mensurável**, quatro tecnologias de comunicação de APIs — **SOAP, REST,
@@ -135,6 +147,661 @@ Portas:
 | SOAP (TypeScript)  | 8013  | `http://localhost:8013/?wsdl`     |
 | gRPC (TypeScript)  | 50052 | `localhost:50052`                 |
 
+## Consultas rápidas no terminal
+
+Todos os comandos desta seção devem ser executados no diretório
+`api-comparison`. Se o seu prompt já mostra `api-comparison`, você já está no
+local correto.
+
+```bash
+cd api-comparison
+```
+
+Confira se os contêineres estão ativos:
+
+```bash
+docker compose ps
+```
+
+Se ainda não estiverem ativos:
+
+```bash
+docker compose up -d --build
+```
+
+O arquivo `consultar_api.sh` executa as consultas sem exigir que você cole
+JSON, XML ou envelopes SOAP grandes no terminal.
+
+O script não acessa o PostgreSQL. O caminho é sempre
+`consultar_api.sh -> porta HTTP/gRPC -> serviço -> repositório -> PostgreSQL`.
+Nos casos REST e GraphQL, `python3 -m json.tool` apenas indenta o JSON que a
+API já retornou. No gRPC, o `grpcurl` apenas representa a mensagem Protobuf
+como JSON no terminal. Por isso, a saída formatada desse script não deve ser
+usada para medir o tamanho bruto do corpo; use `audit_response_sizes.py` ou a
+coluna `Average Content Size` dos relatórios Locust.
+
+### Listar os três recursos em todas as APIs
+
+Serviços Python:
+
+```bash
+./consultar_api.sh all users python
+./consultar_api.sh all musics python
+./consultar_api.sh all playlists python
+```
+
+Serviços TypeScript:
+
+```bash
+./consultar_api.sh all users typescript
+./consultar_api.sh all musics typescript
+./consultar_api.sh all playlists typescript
+```
+
+Cada comando consulta REST, GraphQL, SOAP e gRPC, nessa ordem.
+
+Por padrão, o script mostra apenas cinco registros. Para solicitar até 800:
+
+```bash
+LIMIT=800 ./consultar_api.sh all users python
+LIMIT=800 ./consultar_api.sh all users typescript
+```
+
+O `LIMIT` é a quantidade máxima retornada, não a quantidade criada no banco.
+
+### Consultar uma API específica
+
+```bash
+./consultar_api.sh rest users python
+./consultar_api.sh graphql musics python
+./consultar_api.sh soap playlists python
+./consultar_api.sh grpc users python
+```
+
+Para consultar TypeScript, troque apenas `python` por `typescript`:
+
+```bash
+./consultar_api.sh rest users typescript
+./consultar_api.sh graphql musics typescript
+./consultar_api.sh soap playlists typescript
+./consultar_api.sh grpc users typescript
+```
+
+### Consultar um registro pelo ID
+
+Acrescente o ID no final do comando:
+
+```bash
+./consultar_api.sh rest users python 1
+./consultar_api.sh graphql musics python 1
+./consultar_api.sh soap playlists python 1
+./consultar_api.sh grpc users python 1
+```
+
+### Onde aparece a resposta
+
+A resposta aparece no mesmo terminal, logo abaixo do comando:
+
+- REST e GraphQL: JSON;
+- SOAP: XML;
+- gRPC: conteúdo Protobuf convertido para JSON pelo `grpcurl`.
+
+Para salvar a resposta em um arquivo:
+
+```bash
+./consultar_api.sh rest users python > resposta.json
+./consultar_api.sh soap users python > resposta.xml
+```
+
+Todos os serviços consultam o mesmo PostgreSQL. Por isso, os mesmos usuários,
+músicas e playlists aparecem nas implementações Python e TypeScript e nos
+quatro protocolos.
+
+Na primeira consulta gRPC, o Docker pode baixar a imagem
+`fullstorydev/grpcurl`. Isso acontece apenas se ela ainda não estiver no
+computador.
+
+## Referência detalhada de requisições
+
+### 1. Subir e conferir os contêineres
+
+```bash
+# Sobe o PostgreSQL e as oito APIs
+docker compose up -d --build
+
+# Popula o banco, caso ainda não tenha executado o seed
+docker compose run --rm seed
+
+# Mostra o estado dos contêineres
+docker compose ps
+```
+
+Todas as APIs usam o **mesmo banco PostgreSQL**. Um usuário criado pela API
+REST pode ser consultado por GraphQL, SOAP ou gRPC.
+
+Os exemplos abaixo usam os serviços Python. Para testar TypeScript, altere
+somente a porta:
+
+| Protocolo | Python | TypeScript |
+|-----------|-------:|-----------:|
+| REST      | 8001   | 8011       |
+| GraphQL   | 8002   | 8012       |
+| SOAP      | 8000   | 8013       |
+| gRPC      | 50051  | 50052      |
+
+Formatos nativos das respostas:
+
+- REST: JSON;
+- GraphQL: JSON;
+- SOAP: XML;
+- gRPC: Protobuf (o `grpcurl` exibe esse conteúdo como JSON no terminal).
+
+### 2. Consultar diretamente o PostgreSQL
+
+> Diagnóstico manual apenas. Nenhum benchmark ou gráfico usa `psql`, XML
+> gerado no banco ou saída de Bash como resposta de API. Os Locustfiles
+> chamam exclusivamente as portas HTTP/gRPC dos serviços.
+
+Abrir o console SQL:
+
+```bash
+docker compose exec db psql -U app -d streaming
+```
+
+Dentro do `psql`, alguns exemplos são:
+
+```sql
+SELECT id, name, email
+FROM users
+ORDER BY id
+LIMIT 10;
+
+SELECT id, title, artist
+FROM musics
+ORDER BY id
+LIMIT 10;
+
+SELECT id, name, user_id
+FROM playlists
+ORDER BY id
+LIMIT 10;
+```
+
+Para sair do `psql`:
+
+```text
+\q
+```
+
+Também é possível executar SQL sem abrir o console:
+
+```bash
+docker compose exec -T db psql -U app -d streaming \
+  -c "SELECT id, name, email FROM users ORDER BY id LIMIT 5;"
+```
+
+Gerar XML diretamente pelo PostgreSQL:
+
+```bash
+docker compose exec -T db psql -U app -d streaming -t -A \
+  -c "SELECT xmlelement(
+        name users,
+        xmlagg(
+          xmlelement(
+            name user,
+            xmlelement(name id, id),
+            xmlelement(name name, name),
+            xmlelement(name email, email)
+          )
+        )
+      )
+      FROM (
+        SELECT id, name, email
+        FROM users
+        ORDER BY id
+        LIMIT 5
+      ) AS selected_users;"
+```
+
+Essa saída XML é gerada pelo PostgreSQL. Para testar o protocolo SOAP e
+receber um envelope SOAP, use os comandos da seção SOAP.
+
+### 3. REST
+
+Defina a URL da implementação desejada:
+
+```bash
+# Python
+REST_URL="http://localhost:8001"
+
+# Para usar TypeScript:
+# REST_URL="http://localhost:8011"
+```
+
+Listar e consultar usuários:
+
+```bash
+curl -sS "$REST_URL/users?limit=5&offset=0"
+
+USER_ID=1
+curl -sS "$REST_URL/users/$USER_ID"
+```
+
+Criar, atualizar e excluir um usuário:
+
+```bash
+EMAIL="rest-$(date +%s)@example.com"
+
+curl -sS -X POST "$REST_URL/users" \
+  -H 'Content-Type: application/json' \
+  -d "{\"name\":\"Usuário REST\",\"email\":\"$EMAIL\"}"
+
+# Substitua pelo id retornado na criação
+USER_ID=1
+
+curl -sS -X PATCH "$REST_URL/users/$USER_ID" \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Usuário REST atualizado"}'
+
+curl -i -X DELETE "$REST_URL/users/$USER_ID"
+```
+
+Criar música e playlist:
+
+```bash
+curl -sS -X POST "$REST_URL/musics" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "title":"Música de teste",
+    "artist":"Artista de teste",
+    "album":"Álbum de teste",
+    "duration_seconds":180
+  }'
+
+curl -sS -X POST "$REST_URL/playlists" \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Playlist de teste","user_id":1}'
+```
+
+Consultar e alterar relacionamentos:
+
+```bash
+USER_ID=1
+PLAYLIST_ID=1
+MUSIC_ID=1
+
+# Playlists do usuário
+curl -sS "$REST_URL/users/$USER_ID/playlists"
+
+# Músicas da playlist
+curl -sS "$REST_URL/playlists/$PLAYLIST_ID/musics"
+
+# Playlists que contêm a música
+curl -sS "$REST_URL/musics/$MUSIC_ID/playlists"
+
+# Adiciona a música à playlist. Sucesso retorna HTTP 204 sem corpo.
+curl -i -X PUT \
+  "$REST_URL/playlists/$PLAYLIST_ID/musics/$MUSIC_ID?position=0"
+
+# Remove a música da playlist
+curl -i -X DELETE \
+  "$REST_URL/playlists/$PLAYLIST_ID/musics/$MUSIC_ID"
+```
+
+### 4. GraphQL
+
+Defina o endpoint:
+
+```bash
+# Python
+GRAPHQL_URL="http://localhost:8002/graphql"
+
+# Para usar TypeScript:
+# GRAPHQL_URL="http://localhost:8012/graphql"
+```
+
+Listar usuários, músicas e playlists:
+
+```bash
+curl -sS -X POST "$GRAPHQL_URL" \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"{ users(limit: 5) { id name email } musics(limit: 5) { id title artist album durationSeconds } playlists(limit: 5) { id name userId } }"}'
+```
+
+Consultar um usuário:
+
+```bash
+curl -sS -X POST "$GRAPHQL_URL" \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"{ user(id: 1) { id name email } }"}'
+```
+
+Criar, atualizar e excluir um usuário:
+
+```bash
+EMAIL="graphql-$(date +%s)@example.com"
+
+curl -sS -X POST "$GRAPHQL_URL" \
+  -H 'Content-Type: application/json' \
+  -d "{\"query\":\"mutation { createUser(name: \\\"Usuário GraphQL\\\", email: \\\"$EMAIL\\\") { id name email } }\"}"
+
+# Substitua pelo id retornado na criação
+USER_ID=1
+
+curl -sS -X POST "$GRAPHQL_URL" \
+  -H 'Content-Type: application/json' \
+  -d "{\"query\":\"mutation { updateUser(id: $USER_ID, name: \\\"Usuário atualizado\\\") { id name email } }\"}"
+
+curl -sS -X POST "$GRAPHQL_URL" \
+  -H 'Content-Type: application/json' \
+  -d "{\"query\":\"mutation { deleteUser(id: $USER_ID) }\"}"
+```
+
+Criar música e playlist:
+
+```bash
+curl -sS -X POST "$GRAPHQL_URL" \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"mutation { createMusic(title: \"Música GraphQL\", artist: \"Artista de teste\", album: \"Álbum de teste\", durationSeconds: 180) { id title artist } }"}'
+
+curl -sS -X POST "$GRAPHQL_URL" \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"mutation { createPlaylist(name: \"Playlist GraphQL\", userId: 1) { id name userId } }"}'
+```
+
+Consultar e alterar relacionamentos:
+
+```bash
+curl -sS -X POST "$GRAPHQL_URL" \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"{ userPlaylists(userId: 1) { id name userId } playlistMusics(playlistId: 1) { id title artist } playlistsWithMusic(musicId: 1) { id name userId } }"}'
+
+curl -sS -X POST "$GRAPHQL_URL" \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"mutation { addMusicToPlaylist(playlistId: 1, musicId: 1, position: 0) }"}'
+
+curl -sS -X POST "$GRAPHQL_URL" \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"mutation { removeMusicFromPlaylist(playlistId: 1, musicId: 1) }"}'
+```
+
+Também é possível abrir o GraphiQL no navegador:
+
+- Python: `http://localhost:8002/graphql`
+- TypeScript: `http://localhost:8012/graphql`
+
+### 5. SOAP
+
+Crie esta função no terminal. Ela monta o envelope SOAP automaticamente:
+
+```bash
+soap_call() {
+  local port="$1"
+  local body="$2"
+
+  curl -sS -X POST "http://localhost:${port}/" \
+    -H 'Content-Type: text/xml; charset=utf-8' \
+    -H 'SOAPAction: ""' \
+    --data-binary "<?xml version=\"1.0\"?>
+<soapenv:Envelope
+ xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"
+ xmlns:tns=\"streaming.soap\">
+ <soapenv:Body>${body}</soapenv:Body>
+</soapenv:Envelope>"
+}
+```
+
+Use a porta `8000` para Python ou `8013` para TypeScript:
+
+```bash
+SOAP_PORT=8000
+# SOAP_PORT=8013
+```
+
+Listar e consultar usuários:
+
+```bash
+soap_call "$SOAP_PORT" \
+  '<tns:listUsers>
+    <tns:limit>5</tns:limit>
+    <tns:offset>0</tns:offset>
+  </tns:listUsers>'
+
+soap_call "$SOAP_PORT" \
+  '<tns:getUser><tns:id>1</tns:id></tns:getUser>'
+```
+
+Criar, atualizar e excluir um usuário:
+
+```bash
+EMAIL="soap-$(date +%s)@example.com"
+
+soap_call "$SOAP_PORT" \
+  "<tns:createUser>
+    <tns:name>Usuário SOAP</tns:name>
+    <tns:email>${EMAIL}</tns:email>
+  </tns:createUser>"
+
+# Substitua pelo id retornado na criação
+USER_ID=1
+
+soap_call "$SOAP_PORT" \
+  "<tns:updateUser>
+    <tns:id>${USER_ID}</tns:id>
+    <tns:name>Usuário SOAP atualizado</tns:name>
+  </tns:updateUser>"
+
+soap_call "$SOAP_PORT" \
+  "<tns:deleteUser><tns:id>${USER_ID}</tns:id></tns:deleteUser>"
+```
+
+Criar música e playlist:
+
+```bash
+soap_call "$SOAP_PORT" \
+  '<tns:createMusic>
+    <tns:title>Música SOAP</tns:title>
+    <tns:artist>Artista de teste</tns:artist>
+    <tns:album>Álbum de teste</tns:album>
+    <tns:duration_seconds>180</tns:duration_seconds>
+  </tns:createMusic>'
+
+soap_call "$SOAP_PORT" \
+  '<tns:createPlaylist>
+    <tns:name>Playlist SOAP</tns:name>
+    <tns:user_id>1</tns:user_id>
+  </tns:createPlaylist>'
+```
+
+Consultar e alterar relacionamentos:
+
+```bash
+soap_call "$SOAP_PORT" \
+  '<tns:listUserPlaylists>
+    <tns:user_id>1</tns:user_id>
+  </tns:listUserPlaylists>'
+
+soap_call "$SOAP_PORT" \
+  '<tns:listPlaylistMusics>
+    <tns:playlist_id>1</tns:playlist_id>
+  </tns:listPlaylistMusics>'
+
+soap_call "$SOAP_PORT" \
+  '<tns:listPlaylistsWithMusic>
+    <tns:music_id>1</tns:music_id>
+  </tns:listPlaylistsWithMusic>'
+
+soap_call "$SOAP_PORT" \
+  '<tns:addMusicToPlaylist>
+    <tns:playlist_id>1</tns:playlist_id>
+    <tns:music_id>1</tns:music_id>
+    <tns:position>0</tns:position>
+  </tns:addMusicToPlaylist>'
+
+soap_call "$SOAP_PORT" \
+  '<tns:removeMusicFromPlaylist>
+    <tns:playlist_id>1</tns:playlist_id>
+    <tns:music_id>1</tns:music_id>
+  </tns:removeMusicFromPlaylist>'
+```
+
+Consultar o contrato WSDL:
+
+```bash
+curl -sS "http://localhost:${SOAP_PORT}/?wsdl"
+```
+
+### 6. gRPC
+
+Os comandos abaixo executam o `grpcurl` em um contêiner. Na primeira
+execução, o Docker baixa a imagem `fullstorydev/grpcurl`.
+
+Crie esta função no terminal:
+
+```bash
+grpc_call() {
+  local port="$1"
+  local method="$2"
+  local data="$3"
+
+  docker run --rm --network host \
+    -v "$PWD/python/grpc_api:/protos:ro" \
+    fullstorydev/grpcurl:latest \
+    -plaintext \
+    -import-path /protos \
+    -proto streaming.proto \
+    -d "$data" \
+    "localhost:${port}" \
+    "streaming.StreamingService/${method}"
+}
+```
+
+Use a porta `50051` para Python ou `50052` para TypeScript:
+
+```bash
+GRPC_PORT=50051
+# GRPC_PORT=50052
+```
+
+Listar e consultar usuários:
+
+```bash
+grpc_call "$GRPC_PORT" ListUsers '{"limit":5,"offset":0}'
+grpc_call "$GRPC_PORT" GetUser '{"id":1}'
+```
+
+Criar, atualizar e excluir um usuário:
+
+```bash
+EMAIL="grpc-$(date +%s)@example.com"
+
+grpc_call "$GRPC_PORT" CreateUser \
+  "{\"name\":\"Usuário gRPC\",\"email\":\"$EMAIL\"}"
+
+# Substitua pelo id retornado na criação
+USER_ID=1
+
+grpc_call "$GRPC_PORT" UpdateUser \
+  "{\"id\":$USER_ID,\"name\":\"Usuário gRPC atualizado\"}"
+
+grpc_call "$GRPC_PORT" DeleteUser "{\"id\":$USER_ID}"
+```
+
+Criar música e playlist:
+
+```bash
+grpc_call "$GRPC_PORT" CreateMusic \
+  '{
+    "title":"Música gRPC",
+    "artist":"Artista de teste",
+    "album":"Álbum de teste",
+    "duration_seconds":180
+  }'
+
+grpc_call "$GRPC_PORT" CreatePlaylist \
+  '{"name":"Playlist gRPC","user_id":1}'
+```
+
+Consultar e alterar relacionamentos:
+
+```bash
+grpc_call "$GRPC_PORT" ListUserPlaylists '{"id":1}'
+grpc_call "$GRPC_PORT" ListPlaylistMusics '{"id":1}'
+grpc_call "$GRPC_PORT" ListPlaylistsWithMusic '{"id":1}'
+
+grpc_call "$GRPC_PORT" AddMusicToPlaylist \
+  '{"playlist_id":1,"music_id":1,"position":0}'
+
+grpc_call "$GRPC_PORT" RemoveMusicFromPlaylist \
+  '{"playlist_id":1,"music_id":1}'
+```
+
+### 7. Conferir dados criados por outra API
+
+Por exemplo, depois de criar um usuário por REST, localize-o no banco:
+
+```bash
+docker compose exec -T db psql -U app -d streaming \
+  -c "SELECT id, name, email
+      FROM users
+      WHERE email LIKE 'rest-%@example.com'
+      ORDER BY id DESC
+      LIMIT 5;"
+```
+
+Depois use o `id` retornado para consultar o mesmo usuário em outro
+protocolo:
+
+```bash
+# GraphQL
+curl -sS -X POST http://localhost:8002/graphql \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"{ user(id: 1) { id name email } }"}'
+
+# SOAP
+SOAP_PORT=8000
+soap_call "$SOAP_PORT" \
+  '<tns:getUser><tns:id>1</tns:id></tns:getUser>'
+
+# gRPC
+GRPC_PORT=50051
+grpc_call "$GRPC_PORT" GetUser '{"id":1}'
+```
+
+Substitua o `1` pelo identificador encontrado no banco.
+
+### 8. Diagnóstico
+
+Verificar os serviços:
+
+```bash
+docker compose ps
+curl -sS http://localhost:8001/health
+curl -sS http://localhost:8011/health
+```
+
+Ver logs:
+
+```bash
+docker compose logs --tail=100 rest
+docker compose logs --tail=100 graphql
+docker compose logs --tail=100 soap
+docker compose logs --tail=100 grpc
+```
+
+Para os serviços TypeScript, use `rest_ts`, `graphql_ts`, `soap_ts` ou
+`grpc_ts`.
+
+Erros comuns:
+
+- `connection refused`: o contêiner não está ativo ou a porta está errada;
+- erro de e-mail duplicado: use outro e-mail ou mantenha `$(date +%s)` no
+  comando;
+- `404`, `NOT_FOUND` ou SOAP Fault: o identificador informado não existe;
+- respostas HTTP `204` não possuem corpo e indicam sucesso;
+- REST e GraphQL não retornam XML nativamente. XML é a resposta do SOAP ou
+  pode ser construído diretamente em SQL pelo PostgreSQL.
+
 Para parar: `docker compose down` (ou `down -v` para apagar também o volume
 do banco).
 
@@ -203,7 +870,7 @@ isso, cada nível configurado em `USERS` deve ter pelo menos 15 usuários.
 Isso gera, em `reports/`, para cada serviço e nível de carga:
 
 - `<serviço>_<N>u_stats.csv` — **RPS, latências, P50…P100, falhas** (use a
-  linha `Aggregated`);
+  linha `Aggregated`) e `Average Content Size` em bytes;
 - `<serviço>_<N>u_stats_history.csv` — série temporal;
 - `<serviço>_<N>u.html` — dashboard visual (bom para anexar ao relatório).
 
@@ -213,7 +880,31 @@ esse é o transporte HTTP dos dois protocolos; a ação efetiva (`updateUser`,
 `deleteMusic`, etc.) aparece na coluna `Name`. Em gRPC, `Name` contém o método
 RPC.
 
-### Gerando os gráficos comparativos de latência
+As criações usadas para preparar um `DELETE` e as exclusões usadas para
+limpar um `CREATE` também passam pela API. Essas chamadas usam o cliente
+instrumentado do Locust e são contabilizadas nas mesmas linhas `create*` e
+`delete*`; portanto, não há tráfego oculto consumindo API ou banco fora das
+estatísticas.
+
+### Auditando respostas e tamanhos diretamente
+
+Com os oito serviços ativos, execute:
+
+```bash
+.venv/bin/python audit_response_sizes.py
+```
+
+O script consulta `users`, `musics` e `playlists` nas oito APIs, normaliza
+JSON, XML e Protobuf, compara todos os registros com o REST Python e grava
+`reports/response_sizes.csv`. A coluna `body_bytes` mede o corpo HTTP em
+REST/GraphQL/SOAP e o `ByteSize` da mensagem Protobuf em gRPC, da mesma forma
+que o cliente de carga.
+
+Respostas Python e TypeScript devem conter os mesmos dados porque usam o
+mesmo PostgreSQL. Os tamanhos podem diferir por causa do envelope do
+protocolo e do serializador de cada framework.
+
+### Gerando os gráficos comparativos
 
 Depois que todos os testes terminarem, execute na raiz do projeto:
 
@@ -222,9 +913,9 @@ python3 generate_latency_charts.py
 ```
 
 O script detecta automaticamente os níveis de carga presentes em `reports/`
-e cria gráficos de **latência média** e **P95** em `reports/charts/`. Além dos
-resultados agregados do CRUD completo, são gerados comparativos para `get`,
-`post` (criação), `update` e `delete`:
+e cria gráficos de **latência média**, **P95** e **tamanho médio da resposta**
+em `reports/charts/`. Além dos resultados agregados do CRUD completo, são
+gerados comparativos para `get`, `post` (criação), `update` e `delete`:
 
 - `<metrica>_same_api_<api>.svg` — compara Python e TypeScript para a mesma
   API ao longo das cargas, considerando o CRUD completo;
@@ -235,13 +926,18 @@ resultados agregados do CRUD completo, são gerados comparativos para `get`,
 - `<metrica>_<operacao>_all_apis_<N>u.svg` — compara todas as APIs e
   linguagens para uma operação e carga.
 
-`<metrica>` será `average` para a média do tempo de resposta ou `p95` para o
-percentil 95. `<operacao>` será `get`, `post`, `update` ou `delete`.
+`<metrica>` será `average` para a média do tempo de resposta, `p95` para o
+percentil 95 ou `response_size` para o corpo médio recebido.
+`<operacao>` será `get`, `post`, `update` ou `delete`.
 
 A latência média de cada operação é ponderada pela quantidade de requisições
 das três entidades. Como o CSV do Locust não fornece o histograma combinado
 por categoria, o P95 por operação é uma aproximação ponderada dos P95 de
 usuários, músicas e playlists.
+
+Todos os eixos quantitativos usam **escala linear iniciada em zero**. Assim,
+por exemplo, a distância visual entre 400 ms e 700 ms representa exatamente
+300 ms; não há compressão logarítmica no ranking entre APIs.
 
 Para usar outros diretórios:
 
@@ -258,43 +954,43 @@ memória não aparecem porque precisam ser coletadas separadamente com
 
 ### 250 usuários simultâneos
 
-| API | Linguagem | RPS | Média (ms) | P95 (ms) | P99 (ms) | Falhas |
-|-----|-----------|----:|-----------:|---------:|---------:|-------:|
-| REST | Python | 503,5 | 359,0 | 400 | 430 | 0 |
-| REST | TypeScript | 1975,5 | 4,0 | 8 | 14 | 0 |
-| GraphQL | Python | 269,7 | 771,3 | 850 | 1700 | 0 |
-| GraphQL | TypeScript | 1845,2 | 12,0 | 27 | 41 | 0 |
-| SOAP | Python | 207,5 | 867,6 | 3500 | 7600 | 0 |
-| SOAP | TypeScript | 1751,6 | 19,0 | 48 | 100 | 0 |
-| gRPC | Python | 430,9 | 438,1 | 680 | 800 | 0 |
-| gRPC | TypeScript | 1484,2 | 5,5 | 13 | 26 | 0 |
+| API | Linguagem | RPS | Média (ms) | P95 (ms) | P99 (ms) | Corpo médio (B) | Falhas |
+|-----|-----------|----:|-----------:|---------:|---------:|----------------:|-------:|
+| REST | Python | 392,1 | 512,4 | 660 | 760 | 780 | 0 |
+| REST | TypeScript | 1566,2 | 59,2 | 92 | 120 | 694 | 0 |
+| GraphQL | Python | 191,5 | 1148,4 | 1400 | 1600 | 871 | 0 |
+| GraphQL | TypeScript | 886,9 | 173,9 | 280 | 360 | 771 | 0 |
+| SOAP | Python | 195,0 | 1124,8 | 1300 | 1500 | 1828 | 0 |
+| SOAP | TypeScript | 1278,2 | 92,4 | 140 | 200 | 1676 | 0 |
+| gRPC | Python | 330,6 | 624,8 | 1000 | 1200 | 434 | 0 |
+| gRPC | TypeScript | 1962,4 | 29,8 | 51 | 69 | 347 | 0 |
 
 ### 800 usuários simultâneos
 
-| API | Linguagem | RPS | Média (ms) | P95 (ms) | P99 (ms) | Falhas |
-|-----|-----------|----:|-----------:|---------:|---------:|-------:|
-| REST | Python | 491,8 | 1284,2 | 1600 | 2900 | 0 |
-| REST | TypeScript | 2340,0 | 178,9 | 370 | 530 | 0 |
-| GraphQL | Python | 269,7 | 2405,2 | 2900 | 19000 | 0 |
-| GraphQL | TypeScript | 1758,1 | 277,6 | 580 | 840 | 0 |
-| SOAP | Python | 204,8 | 1406,8 | 5600 | 16000 | 1 |
-| SOAP | TypeScript | 1701,1 | 155,0 | 340 | 450 | 0 |
-| gRPC | Python | 439,9 | 1437,8 | 2500 | 3100 | 0 |
-| gRPC | TypeScript | 1851,1 | 180,9 | 290 | 320 | 0 |
+| API | Linguagem | RPS | Média (ms) | P95 (ms) | P99 (ms) | Corpo médio (B) | Falhas |
+|-----|-----------|----:|-----------:|---------:|---------:|----------------:|-------:|
+| REST | Python | 340,2 | 1902,4 | 2500 | 3200 | 801 | 0 |
+| REST | TypeScript | 1522,9 | 356,4 | 480 | 790 | 787 | 0 |
+| GraphQL | Python | 169,4 | 3838,2 | 5100 | 13000 | 891 | 0 |
+| GraphQL | TypeScript | 847,1 | 711,1 | 1100 | 1700 | 828 | 0 |
+| SOAP | Python | 165,8 | 3896,1 | 5100 | 5200 | 1845 | 0 |
+| SOAP | TypeScript | 1127,8 | 509,1 | 810 | 1200 | 1826 | 0 |
+| gRPC | Python | 312,6 | 2086,5 | 3900 | 5000 | 432 | 0 |
+| gRPC | TypeScript | 1877,1 | 270,7 | 470 | 530 | 405 | 0 |
 
 ### Leitura dos resultados
 
-- **Maior vazão:** REST TypeScript, com aproximadamente `1975 RPS` em 250
-  usuários e `2340 RPS` em 800 usuários.
-- **Melhor latência em 250 usuários:** REST TypeScript, com média de `4 ms`
-  e P95 de `8 ms`.
-- **Melhor cauda em 800 usuários:** gRPC TypeScript, com P95 de `290 ms` e
-  P99 de `320 ms`.
-- **Menor média em 800 usuários:** SOAP TypeScript, com `155 ms`, embora seu
-  P95 de `340 ms` seja maior que o do gRPC TypeScript.
+- **Maior vazão:** gRPC TypeScript, com aproximadamente `1962 RPS` em 250
+  usuários e `1877 RPS` em 800 usuários.
+- **Melhor latência em 250 usuários:** gRPC TypeScript, com média de
+  `29,8 ms` e P95 de `51 ms`.
+- **Melhor latência em 800 usuários:** gRPC TypeScript, com média de
+  `270,7 ms`, P95 de `470 ms` e P99 de `530 ms`.
+- **Menor corpo médio no CRUD completo:** gRPC nas duas linguagens; SOAP
+  apresentou os maiores corpos por causa do envelope XML.
 - **Entre os serviços Python:** REST obteve a maior vazão e as menores
-  latências nas duas cargas. SOAP Python apresentou as maiores caudas e a
-  única falha agregada.
+  latências nas duas cargas.
+- As 16 execuções terminaram sem falhas agregadas.
 - Todos os serviços degradaram em latência ao passar de 250 para 800
   usuários. Isso confirma que a carga concorrente do gRPC passou a ser
   aplicada corretamente após a integração do cliente com `gevent`.
@@ -309,6 +1005,10 @@ memória não aparecem porque precisam ser coletadas separadamente com
 ![Média com 250 usuários](reports/charts/average_all_apis_250u.svg)
 
 ![Média com 800 usuários](reports/charts/average_all_apis_800u.svg)
+
+![Tamanho médio com 250 usuários](reports/charts/response_size_all_apis_250u.svg)
+
+![Tamanho médio com 800 usuários](reports/charts/response_size_all_apis_800u.svg)
 
 ### Rodando um serviço isolado (interface web do Locust)
 
@@ -531,10 +1231,10 @@ Para testar TypeScript, mantenha a classe e troque o host para
 Nos testes de atualização, cada usuário virtual cria um registro próprio
 antes da medição. Nos testes de exclusão, um registro descartável é criado
 antes de cada DELETE. Nos testes de criação, o registro é removido depois que
-o POST foi medido. Essas requisições de preparação e limpeza não entram nas
-estatísticas do Locust, mas geram carga auxiliar no servidor e no banco. Para
-uma medição rigorosamente isolada de escrita, use uma base exclusiva para o
-teste e restaure o seed ao final.
+o POST foi medido. Essas requisições de preparação e limpeza passam pela API
+com o cliente instrumentado do Locust e entram nas mesmas linhas de criação
+ou exclusão. Para uma medição rigorosamente isolada de escrita, use uma base
+exclusiva para o teste e restaure o seed ao final.
 
 #### CRUD isolado em GraphQL, SOAP e gRPC
 

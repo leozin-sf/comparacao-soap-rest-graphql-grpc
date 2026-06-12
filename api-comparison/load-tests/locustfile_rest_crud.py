@@ -9,7 +9,6 @@ from __future__ import annotations
 import random
 from uuid import uuid4
 
-import requests
 from locust import HttpUser, between, task
 
 
@@ -21,19 +20,18 @@ class RestCrudUser(HttpUser):
     wait_time = between(0.05, 0.2)
     auxiliary_timeout = 60
 
-    def _url(self, path: str) -> str:
-        return f"{self.host.rstrip('/')}{path}"
-
-    def _auxiliary_request(self, method: str, path: str, **kwargs):
-        session = getattr(self, "_auxiliary_session", None)
-        if session is None:
-            session = requests.Session()
-            self._auxiliary_session = session
-        return session.request(
+    def _auxiliary_request(
+        self,
+        method: str,
+        path: str,
+        name: str,
+        **kwargs,
+    ):
+        return self.client.request(
             method,
-            self._url(path),
+            path,
+            name=name,
             timeout=self.auxiliary_timeout,
-            headers={"Connection": "close"},
             **kwargs,
         )
 
@@ -52,7 +50,12 @@ class RestCrudUser(HttpUser):
             return None
 
     def _setup_post(self, path: str, json: dict) -> int:
-        response = self._auxiliary_request("POST", path, json=json)
+        response = self._auxiliary_request(
+            "POST",
+            path,
+            name=f"POST {path}",
+            json=json,
+        )
         response.raise_for_status()
         return int(response.json()["id"])
 
@@ -62,6 +65,7 @@ class RestCrudUser(HttpUser):
                 response = self._auxiliary_request(
                     "DELETE",
                     f"{path}/{resource_id}",
+                    name=f"DELETE {path}/:id",
                 )
                 response.raise_for_status()
             except Exception as error:

@@ -55,8 +55,6 @@ class GrpcCrudUser(User):
 
     def on_start(self):
         target = self.host or "localhost:50051"
-        self.setup_channel = grpc.insecure_channel(target)
-        self.setup_stub = pbg.StreamingServiceStub(self.setup_channel)
         measured_channel = grpc.insecure_channel(target)
         self.measured_channel = grpc.intercept_channel(
             measured_channel,
@@ -66,7 +64,6 @@ class GrpcCrudUser(User):
 
     def on_stop(self):
         self.measured_channel.close()
-        self.setup_channel.close()
 
     def _report_auxiliary_error(self, error: Exception) -> None:
         self.environment.events.user_error.fire(
@@ -83,7 +80,7 @@ class GrpcCrudUser(User):
             return None
 
     def _setup_user(self) -> int:
-        result = self.setup_stub.CreateUser(
+        result = self.stub.CreateUser(
             pb.UserInput(
                 name="CRUD setup",
                 email=f"crud-{uuid4().hex}@load.test",
@@ -93,7 +90,7 @@ class GrpcCrudUser(User):
         return result.id
 
     def _setup_music(self) -> int:
-        result = self.setup_stub.CreateMusic(
+        result = self.stub.CreateMusic(
             pb.MusicInput(
                 title="CRUD setup",
                 artist="Load test",
@@ -105,7 +102,7 @@ class GrpcCrudUser(User):
         return result.id
 
     def _setup_playlist(self) -> int:
-        result = self.setup_stub.CreatePlaylist(
+        result = self.stub.CreatePlaylist(
             pb.PlaylistInput(
                 name="CRUD setup",
                 user_id=random.randint(1, N_USERS),
@@ -116,9 +113,9 @@ class GrpcCrudUser(User):
 
     def _cleanup(self, resource: str, resource_id: int) -> None:
         method = {
-            "user": self.setup_stub.DeleteUser,
-            "music": self.setup_stub.DeleteMusic,
-            "playlist": self.setup_stub.DeletePlaylist,
+            "user": self.stub.DeleteUser,
+            "music": self.stub.DeleteMusic,
+            "playlist": self.stub.DeletePlaylist,
         }[resource]
         try:
             method(pb.Id(id=resource_id), timeout=60)

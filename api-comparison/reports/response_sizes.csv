@@ -1,0 +1,25 @@
+protocol,language,resource,item_count,body_bytes,content_type,data_sha256,same_data_as_rest_python
+REST,Python,users,50,3548,application/json,cd23829d3bfb3a7c31e0785bf9eb0993b250def5ff1f766da924cb441820af9d,True
+GraphQL,Python,users,50,3868,application/json,cd23829d3bfb3a7c31e0785bf9eb0993b250def5ff1f766da924cb441820af9d,True
+SOAP,Python,users,50,6587,text/xml; charset=utf-8,cd23829d3bfb3a7c31e0785bf9eb0993b250def5ff1f766da924cb441820af9d,True
+gRPC,Python,users,50,2406,application/grpc+proto,cd23829d3bfb3a7c31e0785bf9eb0993b250def5ff1f766da924cb441820af9d,True
+REST,TypeScript,users,50,3548,application/json; charset=utf-8,cd23829d3bfb3a7c31e0785bf9eb0993b250def5ff1f766da924cb441820af9d,True
+GraphQL,TypeScript,users,50,3567,application/json; charset=utf-8,cd23829d3bfb3a7c31e0785bf9eb0993b250def5ff1f766da924cb441820af9d,True
+SOAP,TypeScript,users,50,6586,text/xml; charset=utf-8,cd23829d3bfb3a7c31e0785bf9eb0993b250def5ff1f766da924cb441820af9d,True
+gRPC,TypeScript,users,50,2406,application/grpc+proto,cd23829d3bfb3a7c31e0785bf9eb0993b250def5ff1f766da924cb441820af9d,True
+REST,Python,musics,50,5042,application/json,7b09add04e01a6b16d93a948392a65e4b55c52fc91ba4c699463fad9d5edf164,True
+GraphQL,Python,musics,50,5513,application/json,7b09add04e01a6b16d93a948392a65e4b55c52fc91ba4c699463fad9d5edf164,True
+SOAP,Python,musics,50,10135,text/xml; charset=utf-8,7b09add04e01a6b16d93a948392a65e4b55c52fc91ba4c699463fad9d5edf164,True
+gRPC,Python,musics,50,2350,application/grpc+proto,7b09add04e01a6b16d93a948392a65e4b55c52fc91ba4c699463fad9d5edf164,True
+REST,TypeScript,musics,50,5042,application/json; charset=utf-8,7b09add04e01a6b16d93a948392a65e4b55c52fc91ba4c699463fad9d5edf164,True
+GraphQL,TypeScript,musics,50,5012,application/json; charset=utf-8,7b09add04e01a6b16d93a948392a65e4b55c52fc91ba4c699463fad9d5edf164,True
+SOAP,TypeScript,musics,50,10134,text/xml; charset=utf-8,7b09add04e01a6b16d93a948392a65e4b55c52fc91ba4c699463fad9d5edf164,True
+gRPC,TypeScript,musics,50,2350,application/grpc+proto,7b09add04e01a6b16d93a948392a65e4b55c52fc91ba4c699463fad9d5edf164,True
+REST,Python,playlists,50,2482,application/json,95418f3b024a64dca0cd15837d7498b8c3e2cb2fdd35f0726af4fcda775ac9ab,True
+GraphQL,Python,playlists,50,2756,application/json,95418f3b024a64dca0cd15837d7498b8c3e2cb2fdd35f0726af4fcda775ac9ab,True
+SOAP,Python,playlists,50,6137,text/xml; charset=utf-8,95418f3b024a64dca0cd15837d7498b8c3e2cb2fdd35f0726af4fcda775ac9ab,True
+gRPC,Python,playlists,50,1238,application/grpc+proto,95418f3b024a64dca0cd15837d7498b8c3e2cb2fdd35f0726af4fcda775ac9ab,True
+REST,TypeScript,playlists,50,2482,application/json; charset=utf-8,95418f3b024a64dca0cd15837d7498b8c3e2cb2fdd35f0726af4fcda775ac9ab,True
+GraphQL,TypeScript,playlists,50,2455,application/json; charset=utf-8,95418f3b024a64dca0cd15837d7498b8c3e2cb2fdd35f0726af4fcda775ac9ab,True
+SOAP,TypeScript,playlists,50,6136,text/xml; charset=utf-8,95418f3b024a64dca0cd15837d7498b8c3e2cb2fdd35f0726af4fcda775ac9ab,True
+gRPC,TypeScript,playlists,50,1238,application/grpc+proto,95418f3b024a64dca0cd15837d7498b8c3e2cb2fdd35f0726af4fcda775ac9ab,True

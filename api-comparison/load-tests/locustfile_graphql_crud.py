@@ -10,7 +10,6 @@ from __future__ import annotations
 import random
 from uuid import uuid4
 
-import requests
 from locust import HttpUser, between, task
 
 
@@ -20,10 +19,6 @@ N_USERS, N_MUSICS, N_PLAYLISTS = 400, 4000, 600
 class GraphQLCrudUser(HttpUser):
     abstract = True
     wait_time = between(0.05, 0.2)
-    auxiliary_timeout = 60
-
-    def _endpoint(self) -> str:
-        return f"{self.host.rstrip('/')}/graphql"
 
     def _report_auxiliary_error(self, error: Exception) -> None:
         self.environment.events.user_error.fire(
@@ -39,22 +34,11 @@ class GraphQLCrudUser(HttpUser):
             self._report_auxiliary_error(error)
             return None
 
-    def _direct(self, query: str) -> dict:
-        session = getattr(self, "_auxiliary_session", None)
-        if session is None:
-            session = requests.Session()
-            self._auxiliary_session = session
-        response = session.post(
-            self._endpoint(),
-            json={"query": query},
-            headers={"Connection": "close"},
-            timeout=self.auxiliary_timeout,
-        )
-        response.raise_for_status()
-        payload = response.json()
-        if payload.get("errors"):
-            raise RuntimeError(payload["errors"])
-        return payload["data"]
+    def _direct(self, query: str, name: str) -> dict:
+        data = self._gql(query, name)
+        if data is None:
+            raise RuntimeError(f"{name} falhou")
+        return data
 
     def _gql(self, query: str, name: str) -> dict | None:
         with self.client.post(
@@ -80,21 +64,25 @@ class GraphQLCrudUser(HttpUser):
     def _setup_user(self) -> int:
         data = self._direct(
             f'mutation{{createUser(name:"CRUD setup",'
-            f'email:"crud-{uuid4().hex}@load.test"){{id}}}}'
+            f'email:"crud-{uuid4().hex}@load.test"){{id name email}}}}',
+            "createUser",
         )
         return int(data["createUser"]["id"])
 
     def _setup_music(self) -> int:
         data = self._direct(
             'mutation{createMusic(title:"CRUD setup",artist:"Load test",'
-            'album:"Temporary",durationSeconds:180){id}}'
+            'album:"Temporary",durationSeconds:180)'
+            '{id title artist album durationSeconds}}',
+            "createMusic",
         )
         return int(data["createMusic"]["id"])
 
     def _setup_playlist(self) -> int:
         data = self._direct(
             'mutation{createPlaylist(name:"CRUD setup",'
-            f"userId:{random.randint(1, N_USERS)}){{id}}}}"
+            f"userId:{random.randint(1, N_USERS)}){{id name userId}}}}",
+            "createPlaylist",
         )
         return int(data["createPlaylist"]["id"])
 
@@ -105,7 +93,10 @@ class GraphQLCrudUser(HttpUser):
             "playlist": "deletePlaylist",
         }[resource]
         try:
-            self._direct(f"mutation{{{mutation}(id:{resource_id})}}")
+            self._direct(
+                f"mutation{{{mutation}(id:{resource_id})}}",
+                mutation,
+            )
         except Exception as error:
             self._report_auxiliary_error(error)
 
@@ -131,7 +122,7 @@ class GraphQLCreateUser(GraphQLCrudUser):
     def create_user(self):
         data = self._gql(
             f'mutation{{createUser(name:"CRUD load",'
-            f'email:"crud-{uuid4().hex}@load.test"){{id}}}}',
+            f'email:"crud-{uuid4().hex}@load.test"){{id name email}}}}',
             "createUser",
         )
         if data and data.get("createUser"):
@@ -144,7 +135,7 @@ class GraphQLUpdateUser(GraphQLCrudUser):
         resource_id = random.randint(1, N_USERS)
         self._gql(
             f'mutation{{updateUser(id:{resource_id},'
-            f'name:"Updated {uuid4().hex[:8]}"){{id name}}}}',
+            f'name:"Updated {uuid4().hex[:8]}"){{id name email}}}}',
             "updateUser",
         )
 
@@ -185,7 +176,8 @@ class GraphQLCreateMusic(GraphQLCrudUser):
     def create_music(self):
         data = self._gql(
             f'mutation{{createMusic(title:"Music {uuid4().hex[:8]}",'
-            'artist:"Load test",album:"Temporary",durationSeconds:180){id}}',
+            'artist:"Load test",album:"Temporary",durationSeconds:180)'
+            '{id title artist album durationSeconds}}',
             "createMusic",
         )
         if data and data.get("createMusic"):
@@ -198,7 +190,8 @@ class GraphQLUpdateMusic(GraphQLCrudUser):
         resource_id = random.randint(1, N_MUSICS)
         self._gql(
             f'mutation{{updateMusic(id:{resource_id},'
-            f'title:"Updated {uuid4().hex[:8]}"){{id title}}}}',
+            f'title:"Updated {uuid4().hex[:8]}")'
+            "{id title artist album durationSeconds}}",
             "updateMusic",
         )
 
@@ -236,7 +229,7 @@ class GraphQLCreatePlaylist(GraphQLCrudUser):
     def create_playlist(self):
         data = self._gql(
             f'mutation{{createPlaylist(name:"Playlist {uuid4().hex[:8]}",'
-            f"userId:{random.randint(1, N_USERS)}){{id}}}}",
+            f"userId:{random.randint(1, N_USERS)}){{id name userId}}}}",
             "createPlaylist",
         )
         if data and data.get("createPlaylist"):
@@ -249,7 +242,7 @@ class GraphQLUpdatePlaylist(GraphQLCrudUser):
         resource_id = random.randint(1, N_PLAYLISTS)
         self._gql(
             f'mutation{{updatePlaylist(id:{resource_id},'
-            f'name:"Updated {uuid4().hex[:8]}"){{id name}}}}',
+            f'name:"Updated {uuid4().hex[:8]}"){{id name userId}}}}',
             "updatePlaylist",
         )
 

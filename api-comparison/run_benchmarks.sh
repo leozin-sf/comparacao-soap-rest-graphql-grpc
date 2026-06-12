@@ -62,6 +62,7 @@ read -r -a ORDER <<< "${BENCHMARK_SERVICES:-${DEFAULT_ORDER[*]}}"
 
 echo ">> Níveis de carga: ${USERS} | duração: ${DURATION}s cada"
 echo ">> Cenário: CRUD completo (15 operações por serviço)"
+echo ">> Preparo/limpeza: chamadas reais pela API, contabilizadas nas operações"
 echo ">> DICA: em outro terminal rode  'docker stats'  para CPU/memória."
 echo ""
 
@@ -103,4 +104,5 @@ done
 
 echo ">> Concluído. Relatórios em ./$OUT/"
 echo ">> Cada *_stats.csv contém as 15 operações CRUD e a linha 'Aggregated'."
+echo ">> Average Content Size registra o corpo médio recebido pelo cliente."
 echo ">> Em GraphQL e SOAP o tipo HTTP continuará POST; a operação está em 'Name'."
