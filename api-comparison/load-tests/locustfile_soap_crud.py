@@ -11,7 +11,6 @@ import random
 import re
 from uuid import uuid4
 
-import requests
 from locust import HttpUser, between, task
 
 
@@ -33,10 +32,6 @@ def envelope(body: str) -> str:
 class SoapCrudUser(HttpUser):
     abstract = True
     wait_time = between(0.05, 0.2)
-    auxiliary_timeout = 60
-
-    def _endpoint(self) -> str:
-        return f"{self.host.rstrip('/')}/"
 
     def _report_auxiliary_error(self, error: Exception) -> None:
         self.environment.events.user_error.fire(
@@ -52,21 +47,11 @@ class SoapCrudUser(HttpUser):
             self._report_auxiliary_error(error)
             return None
 
-    def _direct(self, body: str) -> str:
-        session = getattr(self, "_auxiliary_session", None)
-        if session is None:
-            session = requests.Session()
-            self._auxiliary_session = session
-        response = session.post(
-            self._endpoint(),
-            data=envelope(body),
-            headers={**HEADERS, "Connection": "close"},
-            timeout=self.auxiliary_timeout,
-        )
-        response.raise_for_status()
-        if "Fault" in response.text:
-            raise RuntimeError("SOAP Fault")
-        return response.text
+    def _direct(self, body: str, name: str) -> str:
+        xml = self._call(body, name)
+        if xml is None:
+            raise RuntimeError(f"{name} falhou")
+        return xml
 
     def _call(self, body: str, name: str) -> str | None:
         with self.client.post(
@@ -93,7 +78,8 @@ class SoapCrudUser(HttpUser):
             self._direct(
                 "<tns:createUser><tns:name>CRUD setup</tns:name>"
                 f"<tns:email>crud-{uuid4().hex}@load.test</tns:email>"
-                "</tns:createUser>"
+                "</tns:createUser>",
+                "createUser",
             )
         )
 
@@ -104,7 +90,8 @@ class SoapCrudUser(HttpUser):
                 "<tns:artist>Load test</tns:artist>"
                 "<tns:album>Temporary</tns:album>"
                 "<tns:duration_seconds>180</tns:duration_seconds>"
-                "</tns:createMusic>"
+                "</tns:createMusic>",
+                "createMusic",
             )
         )
 
@@ -113,7 +100,8 @@ class SoapCrudUser(HttpUser):
             self._direct(
                 "<tns:createPlaylist><tns:name>CRUD setup</tns:name>"
                 f"<tns:user_id>{random.randint(1, N_USERS)}</tns:user_id>"
-                "</tns:createPlaylist>"
+                "</tns:createPlaylist>",
+                "createPlaylist",
             )
         )
 
@@ -126,7 +114,8 @@ class SoapCrudUser(HttpUser):
         try:
             self._direct(
                 f"<tns:{operation}><tns:id>{resource_id}</tns:id>"
-                f"</tns:{operation}>"
+                f"</tns:{operation}>",
+                operation,
             )
         except Exception as error:
             self._report_auxiliary_error(error)

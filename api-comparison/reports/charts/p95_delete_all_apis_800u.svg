@@ -2,39 +2,45 @@
 <style>text{font-family:Arial,sans-serif;fill:#17202a}.title{font-size:24px;font-weight:700}.subtitle{font-size:13px;fill:#566573}.axis{stroke:#aab7b8;stroke-width:1}.grid{stroke:#e5e7e9;stroke-width:1}.label{font-size:12px}.value{font-size:12px;font-weight:700}.legend{font-size:13px}</style>
 <rect width="100%" height="100%" fill="#ffffff"/>
 <text x="190" y="38" class="title">P95 - DELETE com 800 usuarios</text>
-<text x="190" y="62" class="subtitle">Ranking entre todas as APIs. Menor e melhor. P95 ponderado das operacoes DELETE por quantidade de requisicoes.</text>
+<text x="190" y="62" class="subtitle">Ranking entre todas as APIs. Menor e melhor. P95 medio ponderado das operacoes DELETE por quantidade de requisicoes. Escala linear iniciada em zero.</text>
 <rect x="730" y="76" width="16" height="10" rx="2" fill="#e4572e"/>
 <text x="753" y="86" class="legend">Python</text>
 <rect x="855" y="76" width="16" height="10" rx="2" fill="#2563eb"/>
 <text x="878" y="86" class="legend">TypeScript</text>
-<line x1="241.7" y1="90" x2="241.7" y2="457" class="grid"/>
-<text x="241.7" y="489" text-anchor="middle" class="label">100 ms</text>
-<line x1="530.7" y1="90" x2="530.7" y2="457" class="grid"/>
-<text x="530.7" y="489" text-anchor="middle" class="label">1 s</text>
-<line x1="819.8" y1="90" x2="819.8" y2="457" class="grid"/>
-<text x="819.8" y="489" text-anchor="middle" class="label">10 s</text>
+<line x1="190.0" y1="90" x2="190.0" y2="457" class="grid"/>
+<text x="190.0" y="489" text-anchor="middle" class="label">0 ms</text>
+<line x1="330.0" y1="90" x2="330.0" y2="457" class="grid"/>
+<text x="330.0" y="489" text-anchor="middle" class="label">2 s</text>
+<line x1="470.0" y1="90" x2="470.0" y2="457" class="grid"/>
+<text x="470.0" y="489" text-anchor="middle" class="label">4 s</text>
+<line x1="610.0" y1="90" x2="610.0" y2="457" class="grid"/>
+<text x="610.0" y="489" text-anchor="middle" class="label">6 s</text>
+<line x1="750.0" y1="90" x2="750.0" y2="457" class="grid"/>
+<text x="750.0" y="489" text-anchor="middle" class="label">8 s</text>
+<line x1="890.0" y1="90" x2="890.0" y2="457" class="grid"/>
+<text x="890.0" y="489" text-anchor="middle" class="label">10 s</text>
 <text x="176" y="125" text-anchor="end" class="label">REST TypeScript</text>
-<rect x="190" y="110" width="50.9" height="22" rx="3" fill="#2563eb"/>
-<text x="249.9" y="126" class="value">99.3296 ms</text>
-<text x="176" y="169" text-anchor="end" class="label">SOAP TypeScript</text>
-<rect x="190" y="154" width="67.4" height="22" rx="3" fill="#2563eb"/>
-<text x="266.4" y="170" class="value">113.304 ms</text>
-<text x="176" y="213" text-anchor="end" class="label">GraphQL TypeScript</text>
-<rect x="190" y="198" width="118.3" height="22" rx="3" fill="#2563eb"/>
-<text x="317.3" y="214" class="value">170 ms</text>
-<text x="176" y="257" text-anchor="end" class="label">gRPC TypeScript</text>
-<rect x="190" y="242" width="125.5" height="22" rx="3" fill="#2563eb"/>
-<text x="324.5" y="258" class="value">180 ms</text>
-<text x="176" y="301" text-anchor="end" class="label">gRPC Python</text>
-<rect x="190" y="286" width="450.6" height="22" rx="3" fill="#e4572e"/>
-<text x="649.6" y="302" class="value">2.4 s</text>
-<text x="176" y="345" text-anchor="end" class="label">SOAP Python</text>
-<rect x="190" y="330" width="474.4" height="22" rx="3" fill="#e4572e"/>
-<text x="673.4" y="346" class="value">2.9 s</text>
+<rect x="190" y="110" width="30.6" height="22" rx="3" fill="#2563eb"/>
+<text x="229.6" y="126" class="value">437 ms</text>
+<text x="176" y="169" text-anchor="end" class="label">gRPC TypeScript</text>
+<rect x="190" y="154" width="32.9" height="22" rx="3" fill="#2563eb"/>
+<text x="231.9" y="170" class="value">470 ms</text>
+<text x="176" y="213" text-anchor="end" class="label">SOAP TypeScript</text>
+<rect x="190" y="198" width="48.5" height="22" rx="3" fill="#2563eb"/>
+<text x="247.5" y="214" class="value">693 ms</text>
+<text x="176" y="257" text-anchor="end" class="label">GraphQL TypeScript</text>
+<rect x="190" y="242" width="63.4" height="22" rx="3" fill="#2563eb"/>
+<text x="262.4" y="258" class="value">906 ms</text>
+<text x="176" y="301" text-anchor="end" class="label">REST Python</text>
+<rect x="190" y="286" width="175.0" height="22" rx="3" fill="#e4572e"/>
+<text x="374.0" y="302" class="value">2.5 s</text>
+<text x="176" y="345" text-anchor="end" class="label">gRPC Python</text>
+<rect x="190" y="330" width="249.7" height="22" rx="3" fill="#e4572e"/>
+<text x="448.7" y="346" class="value">3.57 s</text>
 <text x="176" y="389" text-anchor="end" class="label">GraphQL Python</text>
-<rect x="190" y="374" width="672.0" height="22" rx="3" fill="#e4572e"/>
-<text x="871.0" y="390" class="value">14 s</text>
-<text x="176" y="433" text-anchor="end" class="label">REST Python</text>
-<rect x="190" y="418" width="672.0" height="22" rx="3" fill="#e4572e"/>
-<text x="871.0" y="434" class="value">14 s</text>
+<rect x="190" y="374" width="340.7" height="22" rx="3" fill="#e4572e"/>
+<text x="539.7" y="390" class="value">4.87 s</text>
+<text x="176" y="433" text-anchor="end" class="label">SOAP Python</text>
+<rect x="190" y="418" width="357.0" height="22" rx="3" fill="#e4572e"/>
+<text x="556.0" y="434" class="value">5.1 s</text>
 </svg>

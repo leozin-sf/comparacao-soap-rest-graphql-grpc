@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="512" viewBox="0 0 1000 512">
+<style>text{font-family:Arial,sans-serif;fill:#17202a}.title{font-size:24px;font-weight:700}.subtitle{font-size:13px;fill:#566573}.axis{stroke:#aab7b8;stroke-width:1}.grid{stroke:#e5e7e9;stroke-width:1}.label{font-size:12px}.value{font-size:12px;font-weight:700}.legend{font-size:13px}</style>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="190" y="38" class="title">Tamanho medio da resposta - POST / CREATE com 800 usuarios</text>
+<text x="190" y="62" class="subtitle">Ranking entre todas as APIs. Corpo medio recebido. Escala linear iniciada em zero.</text>
+<rect x="730" y="76" width="16" height="10" rx="2" fill="#e4572e"/>
+<text x="753" y="86" class="legend">Python</text>
+<rect x="855" y="76" width="16" height="10" rx="2" fill="#2563eb"/>
+<text x="878" y="86" class="legend">TypeScript</text>
+<line x1="190.0" y1="90" x2="190.0" y2="457" class="grid"/>
+<text x="190.0" y="489" text-anchor="middle" class="label">0 B</text>
+<line x1="330.0" y1="90" x2="330.0" y2="457" class="grid"/>
+<text x="330.0" y="489" text-anchor="middle" class="label">100 B</text>
+<line x1="470.0" y1="90" x2="470.0" y2="457" class="grid"/>
+<text x="470.0" y="489" text-anchor="middle" class="label">200 B</text>
+<line x1="610.0" y1="90" x2="610.0" y2="457" class="grid"/>
+<text x="610.0" y="489" text-anchor="middle" class="label">300 B</text>
+<line x1="750.0" y1="90" x2="750.0" y2="457" class="grid"/>
+<text x="750.0" y="489" text-anchor="middle" class="label">400 B</text>
+<line x1="890.0" y1="90" x2="890.0" y2="457" class="grid"/>
+<text x="890.0" y="489" text-anchor="middle" class="label">500 B</text>
+<text x="176" y="125" text-anchor="end" class="label">gRPC Python</text>
+<rect x="190" y="110" width="60.3" height="22" rx="3" fill="#e4572e"/>
+<text x="259.3" y="126" class="value">43.1 B</text>
+<text x="176" y="169" text-anchor="end" class="label">gRPC TypeScript</text>
+<rect x="190" y="154" width="60.7" height="22" rx="3" fill="#2563eb"/>
+<text x="259.7" y="170" class="value">43.3 B</text>
+<text x="176" y="213" text-anchor="end" class="label">REST Python</text>
+<rect x="190" y="198" width="109.6" height="22" rx="3" fill="#e4572e"/>
+<text x="308.6" y="214" class="value">78.3 B</text>
+<text x="176" y="257" text-anchor="end" class="label">REST TypeScript</text>
+<rect x="190" y="242" width="114.8" height="22" rx="3" fill="#2563eb"/>
+<text x="313.8" y="258" class="value">82 B</text>
+<text x="176" y="301" text-anchor="end" class="label">GraphQL TypeScript</text>
+<rect x="190" y="286" width="150.0" height="22" rx="3" fill="#2563eb"/>
+<text x="349.0" y="302" class="value">107 B</text>
+<text x="176" y="345" text-anchor="end" class="label">GraphQL Python</text>
+<rect x="190" y="330" width="157.4" height="22" rx="3" fill="#e4572e"/>
+<text x="356.4" y="346" class="value">112 B</text>
+<text x="176" y="389" text-anchor="end" class="label">SOAP Python</text>
+<rect x="190" y="374" width="598.2" height="22" rx="3" fill="#e4572e"/>
+<text x="797.2" y="390" class="value">427 B</text>
+<text x="176" y="433" text-anchor="end" class="label">SOAP TypeScript</text>
+<rect x="190" y="418" width="600.9" height="22" rx="3" fill="#2563eb"/>
+<text x="799.9" y="434" class="value">429 B</text>
+</svg>

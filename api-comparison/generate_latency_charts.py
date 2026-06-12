@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate comparative latency charts from Locust *_stats.csv reports."""
+"""Generate latency and response-size charts from Locust *_stats.csv reports."""
 
 from __future__ import annotations
 
@@ -47,6 +47,7 @@ class Result:
     users: int
     average_ms: float
     p95_ms: float
+    average_size_bytes: float
     operation: str | None = None
 
     @property
@@ -56,7 +57,10 @@ class Result:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Gera graficos SVG de latencia media e P95 a partir do Locust."
+        description=(
+            "Gera graficos SVG de latencia, P95 e tamanho de resposta "
+            "a partir do Locust."
+        )
     )
     parser.add_argument(
         "--reports",
@@ -128,6 +132,7 @@ def grouped_operation_result(
         users=users,
         average_ms=weighted("Average Response Time"),
         p95_ms=weighted("95%"),
+        average_size_bytes=weighted("Average Content Size"),
         operation=operation,
     )
 
@@ -160,6 +165,7 @@ def read_results(reports_dir: Path) -> list[Result]:
                 users=users,
                 average_ms=float(aggregated["Average Response Time"]),
                 p95_ms=float(aggregated["95%"]),
+                average_size_bytes=float(aggregated["Average Content Size"]),
             )
         )
         for operation in CRUD_OPERATIONS:
@@ -198,22 +204,60 @@ def nice_max(value: float) -> float:
         return 1
     magnitude = 10 ** math.floor(math.log10(value))
     normalized = value / magnitude
-    step = 1 if normalized <= 1 else 2 if normalized <= 2 else 5 if normalized <= 5 else 10
+    step = (
+        1
+        if normalized <= 1
+        else 2
+        if normalized <= 2
+        else 2.5
+        if normalized <= 2.5
+        else 5
+        if normalized <= 5
+        else 10
+    )
     return step * magnitude
+
+
+def compact_number(value: float) -> str:
+    if value >= 100:
+        return f"{value:.0f}"
+    if value >= 10:
+        return f"{value:.1f}".rstrip("0").rstrip(".")
+    return f"{value:.2f}".rstrip("0").rstrip(".")
 
 
 def format_ms(value: float) -> str:
     if value >= 1000:
-        return f"{value / 1000:g} s"
-    return f"{value:g} ms"
+        return f"{compact_number(value / 1000)} s"
+    return f"{compact_number(value)} ms"
+
+
+def format_bytes(value: float) -> str:
+    if value >= 1000:
+        return f"{compact_number(value / 1000)} kB"
+    return f"{compact_number(value)} B"
 
 
 def metric_value(result: Result, metric: str) -> float:
-    return result.p95_ms if metric == "p95" else result.average_ms
+    if metric == "p95":
+        return result.p95_ms
+    if metric == "response_size":
+        return result.average_size_bytes
+    return result.average_ms
 
 
 def metric_label(metric: str) -> str:
-    return "P95" if metric == "p95" else "Latencia media"
+    if metric == "p95":
+        return "P95"
+    if metric == "response_size":
+        return "Tamanho medio da resposta"
+    return "Latencia media"
+
+
+def format_metric(value: float, metric: str) -> str:
+    if metric == "response_size":
+        return format_bytes(value)
+    return format_ms(value)
 
 
 def chart_scope(operation: str | None) -> str:
@@ -225,12 +269,18 @@ def chart_scope(operation: str | None) -> str:
 
 
 def chart_subtitle(metric: str, operation: str | None) -> str:
+    if metric == "response_size":
+        return "Corpo medio recebido. Escala linear iniciada em zero."
     if metric == "p95" and operation is not None:
         return (
-            f"Menor e melhor. P95 ponderado das {chart_scope(operation)} "
-            "por quantidade de requisicoes."
+            f"Menor e melhor. P95 medio ponderado das "
+            f"{chart_scope(operation)} por quantidade de requisicoes. "
+            "Escala linear iniciada em zero."
         )
-    return f"Menor e melhor. Escopo: {chart_scope(operation)}."
+    return (
+        f"Menor e melhor. Escopo: {chart_scope(operation)}. "
+        "Escala linear iniciada em zero."
+    )
 
 
 def line_chart(
@@ -269,7 +319,7 @@ def line_chart(
         parts.append(f'<line x1="{left}" y1="{y:.1f}" x2="{width-right}" y2="{y:.1f}" class="grid"/>')
         parts.append(
             f'<text x="{left-12}" y="{y+4:.1f}" text-anchor="end" class="label">'
-            f"{escape(format_ms(value))}</text>"
+            f"{escape(format_metric(value, metric))}</text>"
         )
 
     parts.extend(
@@ -310,7 +360,7 @@ def line_chart(
             )
             parts.append(
                 f'<text x="{x:.1f}" y="{y-11:.1f}" text-anchor="middle" class="value">'
-                f"{escape(format_ms(value))}</text>"
+                f"{escape(format_metric(value, metric))}</text>"
             )
 
     legend_x = width - 260
@@ -336,22 +386,12 @@ def all_apis_chart(
     left, right, top, bottom = 190, 110, 105, 55
     height = top + bottom + row_height * len(ordered)
     plot_width = width - left - right
-    positive_values = [
-        metric_value(result, metric)
-        for result in ordered
-        if metric_value(result, metric) > 0
-    ]
-    min_value = max(1.0, min(positive_values) / 1.5)
-    max_value = max(positive_values) * 1.25
-    min_log, max_log = math.log10(min_value), math.log10(max_value)
-    log_range = max_log - min_log
+    max_value = nice_max(
+        max(metric_value(result, metric) for result in ordered) * 1.1
+    )
 
     def x_position(value: float) -> float:
-        ratio = (
-            (math.log10(max(value, min_value)) - min_log) / log_range
-            if log_range
-            else 1
-        )
+        ratio = value / max_value if max_value else 0
         return left + ratio * plot_width
 
     parts = [
@@ -374,15 +414,13 @@ def all_apis_chart(
             f"{LANGUAGE_LABELS[language]}</text>"
         )
 
-    first_power = math.ceil(min_log)
-    last_power = math.floor(max_log)
-    for power in range(first_power, last_power + 1):
-        value = 10**power
+    for tick in range(6):
+        value = max_value * tick / 5
         x = x_position(value)
         parts.append(f'<line x1="{x:.1f}" y1="{top-15}" x2="{x:.1f}" y2="{height-bottom}" class="grid"/>')
         parts.append(
             f'<text x="{x:.1f}" y="{height-23}" text-anchor="middle" class="label">'
-            f"{escape(format_ms(value))}</text>"
+            f"{escape(format_metric(value, metric))}</text>"
         )
 
     for index, result in enumerate(ordered):
@@ -400,7 +438,7 @@ def all_apis_chart(
         )
         parts.append(
             f'<text x="{bar_end+9:.1f}" y="{y+21}" class="value">'
-            f"{escape(format_ms(value))}</text>"
+            f"{escape(format_metric(value, metric))}</text>"
         )
 
     return svg_document(width, height, "\n".join(parts))
@@ -412,7 +450,7 @@ def main() -> None:
     args.output.mkdir(parents=True, exist_ok=True)
 
     generated: list[Path] = []
-    for metric in ("average", "p95"):
+    for metric in ("average", "p95", "response_size"):
         overall_results = [
             result for result in results if result.operation is None
         ]
